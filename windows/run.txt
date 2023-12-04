@@ -1,0 +1,4 @@
+@echo off
+rem OEM 850, CR LF
+call py\venv\Scripts\activate.bat
+python py\matrix_display.py %*
