@@ -1279,7 +1279,7 @@ if __name__ == '__main__':
 		asyncio.run( app.main() )
 	except KeyboardInterrupt:
 		LOGGER.debug("User exit.")
-	except:
+	except Exception:
 		LOGGER.opt(exception=True).critical("Program terminated!")
 		sys.exit(1)
 
