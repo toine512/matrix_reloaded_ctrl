@@ -1218,7 +1218,7 @@ class MatrixReloadedApp:
 		# Forbidden emotes
 		self.st_forbidden_ids.update( self.comma_separated_list(args.forbidden_emotes) )
 		# Fobidden nicks
-		self.st_forbidden_usr = set( self.comma_separated_list(args.forbidden_users) )
+		self.st_forbidden_usr = set( (nick.lower() for nick in self.comma_separated_list(args.forbidden_users)) )
 
 		# Configure logging
 		LOGGER.remove()
