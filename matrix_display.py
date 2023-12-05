@@ -41,7 +41,7 @@ from loguru._defaults import LOGURU_FORMAT as LOGURU_DEFAULT_FORMAT
 from typing import Any, NoReturn
 from enum import Enum, auto
 from dataclasses import dataclass
-from collections import defaultdict
+from collections import defaultdict, Counter
 from collections.abc import Iterable, Iterator, AsyncIterator, Collection, Callable, Coroutine
 from tempfile import gettempdir
 from emoji import analyze as emoji_analyse, distinct_emoji_list as emoji_list
@@ -546,13 +546,21 @@ class ProcessTwitchEmotes:
 
 	## String processing helpers
 	@staticmethod
-	def count_emojis(s: str) -> dict[str, int]:
-		result: defaultdict[str, int] = defaultdict(lambda: 0)
+	def extract_emojis(s: str, only_list: bool) -> Iterator[tuple[str, int]]:
+		emojis = ()
 
-		for emoji in emoji_analyse(s, False, True):
-			result[emoji.chars] += 1
+		if only_list: # get a set-like of emojis
+			emojis = emoji_list(s)
+		else: # get each emoji occurrence
+			emojis = (emoji.chars for emoji in emoji_analyse(s, False, True))
 
-		return result
+		# Remove the presentation specifier
+		emojis = (emoji.replace("\ufe0e", "").replace("\ufe0f", "") for emoji in emojis)
+
+		if only_list: # set count to 1
+			return ((emoji, 1) for emoji in emojis)
+		# else accumulate
+		return Counter(emojis).items()
 
 
 	@staticmethod
@@ -603,13 +611,7 @@ class ProcessTwitchEmotes:
 				_, s_text = IRCBase.parse_params(msg.params)
 
 				# Extract emojis
-				emojis = ()
-				if self.b_no_sum:
-					emojis = ((emoji, 1) for emoji in emoji_list(s_text))
-				else:
-					emojis = self.count_emojis(s_text).items()
-
-				for s_emoji, i_count in emojis:
+				for s_emoji, i_count in self.extract_emojis(s_text, self.b_no_sum):
 					s_emoji_cp = self.str_to_formatted_codepoints(s_emoji)
 					if s_emoji_cp not in self.st_forbidden_ids:
 						self.emotes_q.put_nowait( EM(EM_T.EMOJI, s_emoji_cp, i_count) )
