@@ -39,7 +39,7 @@ PRGM_VERSION = "0.0"
 from loguru import logger as LOGGER
 from loguru._defaults import LOGURU_FORMAT as LOGURU_DEFAULT_FORMAT
 from typing import Any, NoReturn
-from enum import Enum, auto
+from enum import StrEnum
 from dataclasses import dataclass
 from collections import defaultdict, Counter
 from collections.abc import Iterable, Iterator, AsyncIterator, Collection, Callable, Coroutine
@@ -72,9 +72,9 @@ class EmoteQueue (asyncio.Queue):
 	@dataclass
 	class EmoteItem:
 
-		class Type (Enum):
-			TWITCH_EMOTE = auto()
-			EMOJI = auto()
+		class Type (StrEnum):
+			TWITCH_EMOTE = "twitch"
+			EMOJI = "emoji"
 
 		type: Type
 		value: str
@@ -803,7 +803,7 @@ class GetImages:
 					emote = await self.emotes_q.get()
 
 					# Get a cache path for the image
-					path_file = self._get_cachepath(emote.value)
+					path_file = self._get_cachepath(f"{emote.type}_{emote.value}")
 
 					# Download if missing
 					try:
