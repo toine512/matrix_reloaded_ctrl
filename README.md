@@ -1,5 +1,5 @@
 # matrix_reloaded_ctrl
-# Usage
+## Usage
 ```
 usage: Matrix Display Controller v0.0 [-h] [--matrix-hostname MATRIX_HOSTNAME]
                                       [--log-level {TRACE,DEBUG,INFO,SUCCESS,WARNING,ERROR,CRITICAL}]
@@ -48,3 +48,10 @@ options:
 Built-in forbidden Twitch emotes: MercyWing1, MercyWing2, PowerUpL, PowerUpR,
 Squid1, Squid2, Squid4
 ```
+
+## Licensing
+
+The one-file Python app and associated scripted tools are licensed under GNU Affero General Public License version 3.0 and comes with absolutely no warranty. Full license text is available as the LICENSE.md file, which is a mandatory part of this distribution. This program is free software: you can redistribute it and/or modify it under specified terms. \
+[More information here.](https://www.gnu.org/licenses/agpl-3.0.html)
+
+The windows icon `ioodymDeni.ico` is provided by Alain Gervasi following terms of [CC0 1.0 Universal](https://creativecommons.org/publicdomain/zero/1.0/).
