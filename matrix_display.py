@@ -44,7 +44,7 @@ from dataclasses import dataclass
 from collections import defaultdict, Counter
 from collections.abc import Iterable, Iterator, AsyncIterator, Collection, Callable, Coroutine
 from tempfile import gettempdir
-from emoji import analyze as emoji_analyse, distinct_emoji_list as emoji_list
+from emoji import analyze as emoji_analyse
 from yarl import URL
 from pathlib import Path
 from aiofile import async_open
@@ -547,19 +547,16 @@ class ProcessTwitchEmotes:
 	## String processing helpers
 	@staticmethod
 	def extract_emojis(s: str, only_list: bool) -> Iterator[tuple[str, int]]:
-		emojis = ()
+		# Get each emoji occurrence, remove the presentation specifier if there is no zero-width joiner
+		emojis = (chars if match.is_zwj() else chars.replace("\ufe0e", "").replace("\ufe0f", "") for chars, match in emoji_analyse(s, False, True))
 
-		if only_list: # get a set-like of emojis
-			emojis = emoji_list(s)
-		else: # get each emoji occurrence
-			emojis = (emoji.chars for emoji in emoji_analyse(s, False, True))
-
-		# Remove the presentation specifier
-		emojis = (emoji.replace("\ufe0e", "").replace("\ufe0f", "") for emoji in emojis)
-
-		if only_list: # set count to 1
+		if only_list:
+			# Remove duplicates
+			emojis = set(emojis)
+			# Set count to 1
 			return ((emoji, 1) for emoji in emojis)
-		# else accumulate
+
+		# Else accumulate
 		return Counter(emojis).items()
 
 
