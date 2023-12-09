@@ -12,5 +12,5 @@ rem Run
 call matrix_controller\py\venv\Scripts\activate.bat
 echo on
 pip install -U pyinstaller
-pyinstaller %upx_arg% --onefile matrix_controller\py\matrix_display.py
+pyinstaller %upx_arg% --onefile --icon ioodymDeni.ico matrix_controller\py\matrix_display.py
 @pause
