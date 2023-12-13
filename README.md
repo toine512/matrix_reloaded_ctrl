@@ -32,7 +32,7 @@ Two convenience tools that cover most usages are provided in the `windows/` dire
 Download or clone the repo. Python interpreter must be available in your environment (select add to PATH when you install Python). Try `python --version` in cmd.
 
 **make.bat** performs installation steps and creates `windows/matrix_controller/` containing everything needed and which you can move elsewhere on the same machine. Delete subdirectories of `windows/` and re-run the script when `matrix_display.py` or Python is updated. \
-Use `matrix_controller\run.bat` in a terminal to launch the app as you were running matrix_display.py directly.
+Use `matrix_controller\run.bat` in a terminal to launch the app as you would run matrix_display.py directly.
 
 **generate_exe.bat** uses PyInstaller to produce a standalone executable you'll find in `windows/exe/dist/`. \
 You can remove subdirectories of `windows/` once you have copied `matrix_display.exe`. \
