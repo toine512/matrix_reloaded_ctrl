@@ -1212,8 +1212,8 @@ class MatrixReloadedApp:
 			self._cli_parser.error("--command-port must be specified with --interactive!")
 		if args.command_port and args.command_port < 1:
 			self._cli_parser.error("Port value forbidden!")
-		if not (args.chan or args.command_port):
-			self._cli_parser.error("A channel to join must be supplied when remote command interface is not enabled.")
+		if not (args.chan or args.command_port): # This is also what's displayed when no argument is given at all
+			self._cli_parser.error("A channel to join must be supplied when remote command interface is not enabled. Try --help to see the list of arguments and their explanation.")
 		# Forbidden emotes
 		self.st_forbidden_ids.update( self.comma_separated_list(args.forbidden_emotes) )
 		# Fobidden nicks
