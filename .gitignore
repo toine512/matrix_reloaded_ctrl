@@ -1,7 +1,6 @@
 # Project
 /windows/matrix_controller
-/windows/build
-/windows/dist
+/windows/exe
 
 # Linux
 *~

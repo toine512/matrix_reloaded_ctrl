@@ -2,7 +2,7 @@
 rem OEM 850, CR LF
 
 rem Matrix Display Controller: connects the Matrix Reloaded LED panel display to Twitch chat
-rem Copyright ï¿½ 2023  toine512 <os@toine512.fr>
+rem Copyright ¸ 2023  toine512 <os@toine512.fr>
 rem 
 rem This program is free software: you can redistribute it and/or modify
 rem it under the terms of the GNU Affero General Public License as published by
@@ -29,5 +29,6 @@ rem Run
 call matrix_controller\py\venv\Scripts\activate.bat
 echo on
 pip install -U pyinstaller
-pyinstaller %upx_arg% --onefile --icon ioodymDeni.ico matrix_controller\py\matrix_display.py
+pyinstaller %upx_arg% --onefile --icon ..\ioodymDeni.ico --distpath exe\dist --specpath exe --workpath exe\build matrix_controller\py\matrix_display.py
+
 @pause
