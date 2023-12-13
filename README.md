@@ -4,8 +4,7 @@
 
 ### Prerequisites
 
-**Python 3.12+** \
-May or may not work with Python 3.11.
+**Python 3.11+**
 
 Libraries used: [aiohttp](https://docs.aiohttp.org), [aiofile](https://github.com/mosquito/aiofile), [emoji](https://carpedm20.github.io/emoji/docs/), [loguru](https://github.com/Delgan/loguru)
 
