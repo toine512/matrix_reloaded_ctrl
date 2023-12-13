@@ -1,13 +1,55 @@
 # matrix_reloaded_ctrl
+
+## Installation
+
+### Prerequisites
+
+**Python 3.12+** \
+May or may not work with Python 3.11.
+
+Libraries used: [aiohttp](https://docs.aiohttp.org), [aiofile](https://github.com/mosquito/aiofile), [emoji](https://carpedm20.github.io/emoji/docs/), [loguru](https://github.com/Delgan/loguru)
+
+### General case
+
+Download or clone the repo. Alternatively, files you really need for running the app are `matrix_display.py` and `requirements.txt`.
+
+All dependencies are available from PyPI. You probably should create a Python virtual environment to install them: \
+`python -m venv matrix_env`
+
+Then switch to the virtual environment and install packages using pip: \
+`. matrix_env/bin/activate` for POSIX shell \
+`matrix_env\Scripts\activate.bat` for cmd \
+`matrix_env\Scripts\Activate.ps1` for PowerShell \
+`pip install -r requirements.txt`
+
+matrix_display.py has a command line interface. To run, first activate the venv as above then use Python from the local environment. \
+Try `python matrix_display.py --help` to get the usage prompt below.
+
+### Windows
+
+Two convenience tools that cover most usages are provided in the `windows/` directory.
+
+Download or clone the repo. Python interpreter must be available in your environment (select add to PATH when you install Python). Try `python --version` in cmd.
+
+**make.bat** performs installation steps and creates `windows/matrix_controller/` containing everything needed and which you can move elsewhere on the same machine. Delete subdirectories of `windows/` and re-run the script when `matrix_display.py` or Python is updated. \
+Use `matrix_controller\run.bat` in a terminal to launch the app as you were running matrix_display.py directly.
+
+**generate_exe.bat** uses PyInstaller to produce a standalone executable you'll find in `windows/exe/dist/`. \
+You can remove subdirectories of `windows/` once you have copied `matrix_display.exe`. \
+PyInstaller supports using [UPX](https://upx.github.io) in order to reduce executable size. Pass the path to the directory containing `upx.exe` as first argument of generate_exe.bat if you'd like to use UPX.
+
+## How it works
+
+
 ## Usage
 ```
-usage: Matrix Display Controller v0.0 [-h] [--matrix-hostname MATRIX_HOSTNAME]
-                                      [--log-level {TRACE,DEBUG,INFO,SUCCESS,WARNING,ERROR,CRITICAL}]
-                                      [-q] [-s]
-                                      [--forbidden-emotes FORBIDDEN_EMOTES]
-                                      [--forbidden-users FORBIDDEN_USERS] [-u]
-                                      [-i] [--command-port COMMAND_PORT]
-                                      [chan]
+Matrix Display Controller v0.0 [-h] [-q] [-s] [-i]
+                               [--matrix-hostname MATRIX_HOSTNAME]
+                               [--log-level {TRACE,DEBUG,INFO,SUCCESS,WARNING,ERROR,CRITICAL}]
+                               [--forbidden-emotes FORBIDDEN_EMOTES]
+                               [--forbidden-users FORBIDDEN_USERS] [-u]
+                               [--command-port COMMAND_PORT]
+                               [chan]
 
 positional arguments:
   chan                  Required if standalone. Twitch Messaging Interface
