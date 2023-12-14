@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
+# Dependencies: emoji aiohttp brotli aiofile loguru
 from __future__ import annotations
 
-# Dependencies: emoji aiohttp brotli aiofile loguru
+### Internal Configuration ###
 
-# Internal Configuration
 FORBIDDEN_TWITCH_EMOTES = {
 	"MercyWing1": "1003187",
 	"MercyWing2": "1003189",
@@ -16,8 +16,12 @@ FORBIDDEN_TWITCH_EMOTES = {
 FULL_LOG_INFO_TO_CONSOLE = False
 PRGM_VERSION = "0.0"
 
+### ***************************** ###
 
 
+
+### License notice ###
+#
 #	Matrix Display Controller: connects the Matrix Reloaded LED panel display to Twitch chat
 #	<https://github.com/toine512/matrix_reloaded_ctrl>
 #	Copyright © 2023  toine512 <os@toine512.fr>
@@ -34,31 +38,40 @@ PRGM_VERSION = "0.0"
 #
 #	You should have received a copy of the GNU Affero General Public License
 #	along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+### ***************************** ###
 
 
 
-from loguru import logger as LOGGER
-from loguru._defaults import LOGURU_FORMAT as LOGURU_DEFAULT_FORMAT
-from typing import Any, NoReturn
-from enum import StrEnum
-from dataclasses import dataclass
-from collections import defaultdict, Counter
-from collections.abc import Iterable, Iterator, AsyncIterator, Collection, Callable, Coroutine
-from tempfile import gettempdir
-from emoji import analyze as emoji_analyse
-from yarl import URL
-from pathlib import Path
-from aiofile import async_open
-from uuid import uuid1
+### Imports ###
+
+# Built-ins
 import abc
-import re
 import argparse
-import sys
-import traceback
-import textwrap
 import asyncio
 from asyncio import CancelledError
+from collections import defaultdict, Counter
+from collections.abc import Iterable, Iterator, AsyncIterator, Collection, Callable, Coroutine
+from dataclasses import dataclass
+from enum import StrEnum
+from pathlib import Path
+from typing import Any, NoReturn
+import re
+import sys
+from tempfile import gettempdir
+import textwrap
+import traceback
+from uuid import uuid1
+
+# External modules
+from aiofile import async_open
 import aiohttp
+import emoji
+from loguru import logger as LOGGER
+from loguru._defaults import LOGURU_FORMAT as LOGURU_DEFAULT_FORMAT
+from yarl import URL
+
+### ***************************** ###
 
 
 
@@ -549,7 +562,7 @@ class ProcessTwitchEmotes:
 	@staticmethod
 	def extract_emojis(s: str, only_list: bool) -> Iterator[tuple[str, int]]:
 		# Get each emoji occurrence, remove the presentation specifier if there is no zero-width joiner
-		emojis = (chars if match.is_zwj() else chars.replace("\ufe0e", "").replace("\ufe0f", "") for chars, match in emoji_analyse(s, False, True))
+		emojis = (chars if match.is_zwj() else chars.replace("\ufe0e", "").replace("\ufe0f", "") for chars, match in emoji.analyze(s, False, True))
 
 		if only_list:
 			# Remove duplicates
