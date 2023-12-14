@@ -1,4 +1,11 @@
-# matrix_reloaded_ctrl
+# Matrix Display Controller
+
+This is the companion app to ["Matrix Reloaded" LED matrix display](). Written in Python with full asyncio concurrency, the "Matrix Display Controller" connects your Twitch chat to the LED matrix display.
+
+Emotes and emojis posted in chosen channel(s) are fed to the LED matrix as an interactive element of streamers' set. The app provides a rudimentary remote control interface allowing integration in a workflow.
+
+Necessary assets are downloaded and cached in host system's temporary directory. Any logic is done before sending an image to the matrix which only works realtime. \
+Purposely rendered [Twemoji](https://github.com/toine512/twemoji-bitmaps?tab=readme-ov-file) emojis are used.
 
 ## Installation
 
@@ -39,6 +46,11 @@ PyInstaller supports using [UPX](https://upx.github.io) in order to reduce execu
 
 ## How it works
 
+## Use cases
+
+### Basic - run ondemand
+
+### Remote controlled
 
 ## Usage
 ```
