@@ -2,6 +2,7 @@
 rem OEM 850, CR LF
 
 rem Matrix Display Controller: connects the Matrix Reloaded LED panel display to Twitch chat
+rem <https://github.com/toine512/matrix_reloaded_ctrl>
 rem Copyright ¸ 2023  toine512 <os@toine512.fr>
 rem
 rem This program is free software: you can redistribute it and/or modify
