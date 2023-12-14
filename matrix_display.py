@@ -145,7 +145,6 @@ class IRCBase (abc.ABC):
 						msg = e.partial.decode(encoding, "ignore")
 					except Exception:
 						LOGGER.trace("{tag}: IncompleteReadError, failure to decode", tag=log_tag)
-						pass
 					else:
 						# Was the last byte lost? (socket closed too fast?) => Is there a partial separator: \r from \r\n?
 						if len(msg) > 1 and msg[-1] == "\r":
@@ -480,7 +479,7 @@ class TMIClient (IRCBase):
 				self.socket_reader, self.socket_writer = await asyncio.open_connection(self.s_server_hostname, self.i_server_port, ssl=True)
 			except OSError as e:
 				LOGGER.error("TMI: Can't connect to Twitch Messaging Interface! {exc!s}\nRetry in 5 minutes.", exc=e)
-				pass # Try to reconnect
+				# Try to reconnect
 			else: # Socket is open
 
 				li_deferred_messages: list[IRCBase.IRCMessage] = list()
@@ -713,7 +712,6 @@ class GetImages:
 
 		except aiohttp.ClientError as e:
 			LOGGER.error("Downloader: HTTPS GET failed: {exc!s}", exc=e)
-			pass
 
 		if not self.b_do_twitch:
 			LOGGER.error("Downloader: Disabling Twitch emotes download!")
@@ -735,7 +733,6 @@ class GetImages:
 
 		except aiohttp.ClientError as e:
 			LOGGER.error("Downloader: HTTPS GET failed: {exc!s}", exc=e)
-			pass
 
 		if not self.b_do_emoji:
 			LOGGER.error("Downloader: Disabling emojis download!")
