@@ -1209,7 +1209,7 @@ class MatrixReloadedApp:
 		# Parse command line
 		args = self._cli_parser.parse_args()
 
-		# Prints AGPL prompt to stdout and exits
+		# Prints AGPL prompt to stdout and exits if requested
 		if args.license:
 			print(textwrap.dedent("""\
 				Matrix Display Controller: connects the Matrix Reloaded LED panel display to Twitch chat
@@ -1277,6 +1277,7 @@ class MatrixReloadedApp:
 			# Start if not in interactive mode
 			if not (args.interactive and args.command_port):
 				self.start()
+		# Remove the reference after the context manager exits
 		self._taskgroup_main = None
 
 	## ##
