@@ -54,6 +54,7 @@ import re
 import argparse
 import sys
 import traceback
+import textwrap
 import asyncio
 from asyncio import CancelledError
 import aiohttp
@@ -1117,6 +1118,8 @@ class MatrixReloadedApp:
 		cli.add_argument("-u", "--no-summation", action="store_true", help="Don't count repetitions of the same emote/emoji in A message.")
 		cli.add_argument("-i", "--interactive", action="store_true", help="Don't do anything. Wait for commands on the command interface. --command-port is mandatory.")
 		cli.add_argument("--command-port", action="store", type=int, help="TCP port for the command interface. The command interface is disabled if this argument is not specified.")
+		cli.add_argument("--version", action="version", version=PRGM_VERSION, help="Shows version and exits.")
+		cli.add_argument("--license", action="store_true", help="Shows license prompt and exits.")
 		self._cli_parser = cli
 
 		self._taskgroup_main: asyncio.TaskGroup | None = None
@@ -1204,6 +1207,20 @@ class MatrixReloadedApp:
 	async def main(self) -> None:
 		# Parse command line
 		args = self._cli_parser.parse_args()
+
+		# Prints AGPL prompt to stdout and exits
+		if args.license:
+			print(textwrap.dedent("""\
+				Matrix Display Controller: connects the Matrix Reloaded LED panel display to Twitch chat
+				<https://github.com/toine512/matrix_reloaded_ctrl>
+				Copyright © 2023  toine512 <os@toine512.fr>
+
+				This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+
+				This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details. <https://www.gnu.org/licenses/>""" \
+			))
+			exit(0)
+
 		# Validate args
 		if args.interactive and not args.command_port:
 			self._cli_parser.error("--command-port must be specified with --interactive!")
