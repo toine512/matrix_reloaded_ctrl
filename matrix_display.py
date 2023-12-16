@@ -59,10 +59,10 @@ from typing import Any, NoReturn
 import re
 import shutil
 import sys
-from tempfile import gettempdir
+import tempfile
 import textwrap
 import traceback
-from uuid import uuid1
+import uuid
 
 # External modules
 from aiofile import async_open
@@ -357,7 +357,7 @@ class TMIClient (IRCBase):
 		if user:
 			self.s_user = user
 		else:
-			self.s_user = f"justinfan{uuid1().int>>79}"
+			self.s_user = f"justinfan{uuid.uuid1().int>>79}"
 
 		oauth2_token = str(oauth2_token)
 		if oauth2_token:
@@ -655,7 +655,7 @@ class GetImages:
 
 	url_twitch_base = URL("https://static-cdn.jtvnw.net/emoticons/v2/")
 	url_emoji_base = URL("https://cdn.jsdelivr.net/gh/toine512/twemoji-bitmaps@main/128x128_png32/")
-	path_cache = Path( gettempdir() ) / "python_matrix_reloaded_cache"
+	path_cache = Path( tempfile.gettempdir() ) / "python_matrix_reloaded_cache"
 
 
 	def __init__(self, emotes_id_q: EmoteQueue, forbidden_emotes: set) -> None:
