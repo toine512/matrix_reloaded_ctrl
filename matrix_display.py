@@ -57,6 +57,7 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Any, NoReturn
 import re
+import shutil
 import sys
 from tempfile import gettempdir
 import textwrap
@@ -1156,6 +1157,7 @@ class MatrixReloadedApp:
 		cli.add_argument("-u", "--no-summation", action="store_true", help="Don't count repetitions of the same emote/emoji in A message.")
 		cli.add_argument("-i", "--interactive", action="store_true", help="Don't do anything. Wait for commands on the command interface. --command-port is mandatory.")
 		cli.add_argument("--command-port", action="store", type=int, help="TCP port for the command interface. The command interface is disabled if this argument is not specified.")
+		cli.add_argument("--purge", action="store_true", help="Cleans the local cache and exits. Sometimes emojis get corrections.")
 		cli.add_argument("--version", action="version", version=PRGM_VERSION, help="Shows version and exits.")
 		cli.add_argument("--license", action="store_true", help="Shows license prompt and exits.")
 		self._cli_parser = cli
@@ -1275,6 +1277,11 @@ class MatrixReloadedApp:
 
 				This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details. <https://www.gnu.org/licenses/>""" \
 			))
+			exit(0)
+
+		# Or removes the cache if requested
+		if args.purge:
+			shutil.rmtree(GetImages.path_cache, True)
 			exit(0)
 
 		# Else validate args
