@@ -4,7 +4,7 @@ This is the companion app to ["Matrix Reloaded" LED matrix display](). Written i
 
 Emotes and emojis posted in chosen channel(s) are fed to the LED matrix as an interactive element of streamers' set. The app provides a rudimentary remote control interface allowing integration in a workflow.
 
-Necessary assets are downloaded and cached in host system's temporary directory. Any logic is done before sending an image to the matrix which only works realtime. \
+Necessary assets are downloaded and cached in host system's temporary directory. Any logic is done before sending an image to the matrix which is a simple queue. \
 Purposely rendered [Twemoji](https://github.com/toine512/twemoji-bitmaps?tab=readme-ov-file) emojis are used.
 
 ## Installation
@@ -33,12 +33,12 @@ Try `python matrix_display.py --help` to get the usage prompt below.
 
 ### Windows
 
-Two convenience tools that cover most usages are provided in the `windows/` directory.
+Two convenience tools that cover most uses are provided in the `windows/` directory.
 
 Download or clone the repo. Python interpreter must be available in your environment (select add to PATH when you install Python). Try `python --version` in cmd.
 
-**make.bat** performs installation steps and creates `windows/matrix_controller/` containing everything needed and which you can move elsewhere on the same machine. When `matrix_display.py` or Python is updated: delete subdirectories of `windows/` and re-run the script. \
-Use `matrix_controller\run.bat` in a terminal to launch the app as you would run matrix_display.py directly.
+**make.bat** performs installation steps and creates `windows/matrix_controller/` containing everything needed and which you can move elsewhere on the same machine. You need to regenerate when `matrix_display.py` or Python is updated: delete subdirectories of `windows/` and re-run the script. \
+Use `matrix_controller\run.bat` in a terminal to launch the app as you would be running matrix_display.py directly.
 
 **generate_exe.bat** uses PyInstaller to produce a standalone executable you'll find in `windows/exe/dist/`. \
 You can remove subdirectories of `windows/` once you have copied `matrix_display.exe`. \
