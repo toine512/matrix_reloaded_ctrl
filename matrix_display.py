@@ -844,6 +844,7 @@ class MatrixPush:
 		self._s_host = str(host).strip()
 		self._fn_source = emote_ladder_function
 		self._st_banlist: set[str] = set()
+		self.pause = False
 
 
 	## App-available method
@@ -879,6 +880,10 @@ class MatrixPush:
 				di_ladder = await self._fn_source()
 
 				while True:
+					# Trap to pause operation
+					while self.pause:
+						await asyncio.sleep(1.5)
+
 					# Get highest ranked emote
 					try:
 						s_name = max(di_ladder, key=di_ladder.get)
@@ -1055,15 +1060,33 @@ class CommandInterface:
 								LOGGER.debug("Remote: Clear all command failed.")
 								await self._send(socket_writer, b_telnet, "Error clearing matrix display.")
 
+						case "pause":
+							if self._app.pause():
+								LOGGER.info("Remote: Paused display.")
+								await self._send(socket_writer, b_telnet, "Paused display.")
+							else:
+								LOGGER.debug("Remote: Requested PAUSE while not running.")
+								await self._send(socket_writer, b_telnet, "Show is not running!.")
+
+						case "resume":
+							if self._app.resume():
+								LOGGER.info("Remote: Resumed displaying images.")
+								await self._send(socket_writer, b_telnet, "Resumed display.")
+							else:
+								LOGGER.debug("Remote: Requested RESUME while not running.")
+								await self._send(socket_writer, b_telnet, "Show is not running!.")
+
 						case "?" | "help" | "h":
 							prompt = (
 								"  ** Command list **",
-								"     ? - Shows this message",
-								"    ON - Starts operation",
-								"   OFF - Stops operation",
-								" CLEAR - Clears all queues and the matrix display",
-								"TELNET - All line breaks (LF) are converted to CR LF for the lifetime of the connection",
-								"JOIN :<#chan>{,<#chan>{,...}} - Joins <#chan>"
+								"     ? - Shows this message.",
+								"    ON - Starts operation.",
+								"   OFF - Stops operation.",
+								" CLEAR - Clears all queues and the matrix display.",
+								" PAUSE - Stops sending images to the matrix display, emotes and emoji collection remaining active.",
+								"RESUME - Resumes sending images to the matrix display. The backlog is sent.",
+								"TELNET - All line breaks (LF) are converted to CR LF for the lifetime of the connection.",
+								"JOIN :<#chan>{,<#chan>{,...}} - Joins <#chan>."
 							)
 							await self._send(socket_writer, b_telnet, "\n| ".join(prompt))
 
@@ -1208,6 +1231,24 @@ class MatrixReloadedApp:
 
 		return False
 
+
+	def pause(self) -> bool:
+		if not (self._task_run_show == None or self._task_run_show.done()):
+			# Defined if "the show" runs
+			self.uploader.pause = True
+			return True
+
+		return False
+
+
+	def resume(self) -> bool:
+		if not (self._task_run_show == None or self._task_run_show.done()):
+			# Defined if "the show" runs
+			self.uploader.pause = False
+			return True
+
+		return False
+
 	## ##
 
 	## Task
@@ -1235,7 +1276,7 @@ class MatrixReloadedApp:
 			))
 			exit(0)
 
-		# Validate args
+		# Else validate args
 		if args.interactive and not args.command_port:
 			self._cli_parser.error("--command-port must be specified with --interactive!")
 		if args.command_port and args.command_port < 1:
