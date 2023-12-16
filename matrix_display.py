@@ -1042,6 +1042,7 @@ class CommandInterface:
 								await self._send(socket_writer, b_telnet, "Can't stop the show.")
 
 						case "join":
+							LOGGER.debug("Remote: Requested JOIN {}.", textwrap.shorten(repr(trailing), 300))
 							try:
 								b_res = await self._app.join_channel(trailing)
 							except Exception:
