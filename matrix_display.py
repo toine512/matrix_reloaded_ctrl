@@ -1332,6 +1332,15 @@ class MatrixReloadedApp:
 		# Banner
 		LOGGER.info("Matrix Display Controller\nversion {ver}\thttps://github.com/toine512/matrix_reloaded_ctrl", ver=PRGM_VERSION)
 
+		# Report user configuration
+		LOGGER.info("Target display is {host}", host=args.matrix_hostname)
+		if self.st_forbidden_ids:
+			LOGGER.info("Forbidden Twitch emote ids: {ids}", ids=", ".join(self.st_forbidden_ids))
+		if self.st_forbidden_usr:
+			LOGGER.info("Ignored Twitch users: {names}", names=", ".join(self.st_forbidden_usr))
+		if args.no_summation:
+			LOGGER.info("Summation of emote instances per message is disabled.")
+
 		# Run
 		async with asyncio.TaskGroup() as tg:
 			# Make the group universally usable (dangerous)
