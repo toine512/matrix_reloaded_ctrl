@@ -1297,9 +1297,9 @@ class MatrixReloadedApp:
 		if not (args.chan or args.command_port): # This is also what's displayed when no argument is given at all
 			self._cli_parser.error("A channel to join must be supplied when remote command interface is not enabled. Try --help to see the list of arguments and their explanation.")
 		# Forbidden emotes
-		self.st_forbidden_ids.update( self.comma_separated_list(args.forbidden_emotes) )
+		self.st_forbidden_ids.update( (id for id in self.comma_separated_list(args.forbidden_emotes) if id) )
 		# Fobidden nicks
-		self.st_forbidden_usr = set( (nick.lower() for nick in self.comma_separated_list(args.forbidden_users)) )
+		self.st_forbidden_usr = set( (nick.lower() for nick in self.comma_separated_list(args.forbidden_users) if nick) )
 
 		# Configure logging
 		LOGGER.remove()
