@@ -181,7 +181,7 @@ class IRCBase (abc.ABC):
 
 			else:
 				msg = msg[0:-2]
-				LOGGER.trace("{tag}: {line}", tag=log_tag, line=repr(msg)[1:-1])
+				LOGGER.opt(lazy=True).trace("{}", lambda: f"{log_tag}: {repr(msg)[1:-1]}")
 				yield msg
 
 
