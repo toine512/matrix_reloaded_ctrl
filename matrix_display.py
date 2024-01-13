@@ -920,11 +920,11 @@ class MatrixPush:
 											case 200:
 												# Good
 												del di_ladder[s_name]
-												LOGGER.debug("Display: Uploaded {name} to matrix", name=s_name)
+												LOGGER.debug("Display: Uploaded {name} to matrix.", name=s_name)
 
 											case 503:
 												http_res.release()
-												LOGGER.debug("Display: Matrix memory full")
+												LOGGER.debug("Display: Matrix memory full.")
 												# Wait for a bit and retry
 												await asyncio.sleep(2.5)
 
