@@ -174,7 +174,7 @@ class IRCBase (abc.ABC):
 				raise
 
 			except asyncio.LimitOverrunError as e: # Data accumulated without a separator
-				LOGGER.trace("{tag}: LimitOverrunError")
+				LOGGER.trace("{tag}: LimitOverrunError", tag=log_tag)
 				# Purge buffer
 				await socket_reader.read(e.consumed)
 				# Continue waiting for more
