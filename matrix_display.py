@@ -874,7 +874,10 @@ class MatrixPush:
 	## Task
 	async def run(self) -> NoReturn:
 
-		async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=180)) as http_cli:
+		# aiohttp client configuration:
+		# - cache DNS for 1h (usually mDNS)
+		# - request timeout 3 min (account for reachability issues)
+		async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(use_dns_cache=True, ttl_dns_cache=3600, limit_per_host=1), timeout=aiohttp.ClientTimeout(total=180)) as http_cli:
 
 			while True:
 
@@ -945,6 +948,8 @@ class MatrixPush:
 												raise RuntimeError("Unexpected matrix HTTP response!")
 
 								except aiohttp.ClientError as e:
+									# Error may be unreachability due to address changing (got through mDNS)
+									http_cli.connector.clear_dns_cache() # type: ignore
 									# Maybe recoverable error, wait 30 s and retry
 									LOGGER.warning("Display: Matrix unavailable. {exc!s}\nRetry in 30 seconds.", exc=e)
 									await asyncio.sleep(30)
