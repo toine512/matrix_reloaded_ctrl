@@ -62,6 +62,8 @@ While the display is unreachable, emote/emoji collection, ranking and download r
 
 ## Command interface
 
+The command interface is intended to help handing over control of the matrix display to another software in an automation system. It doesn't provide remote dynamic full functionality. Text over a TCP connection is used to issue commands. The command interface can be enabled by providing the port you'd like to use: `--command-port <port>`. Concurrent connections are not supported, which greatly simplified implementation. When a new connection is established, the existing one (if any) is closed.
+
 ## Use cases
 
 ### Basic - run ondemand
