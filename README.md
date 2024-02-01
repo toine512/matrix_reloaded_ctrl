@@ -49,7 +49,8 @@ PyInstaller supports using [UPX](https://upx.github.io) in order to reduce execu
 The matrix display is a simple image queue which preserves order of upload. The buffer of available memory is divided into fixed size slots. A slot is freed once the image it contains has been displayed. No logic besides consuming queue items happens at the receiving end. The display directly decodes PNG and GIF and supports resizing.
 
 This app connects to Twitch Messaging Interface (TMI) as the anonymous user (read only), no credentials are required. You can join multiple channels at the same time (as described in [Twitch Developers documentation](https://dev.twitch.tv/docs/irc/join-chat-room/)). Letter case doesn't matter. \
-Example: `python matrix_display.py "#ioodyme,#ElisaK_,#Rancune_,#Yorzian,#SarahCoponat"`
+Example: `python matrix_display.py "#ioodyme,#ElisaK_,#Rancune_,#Yorzian,#SarahCoponat"` \
+Joining a channel is an asynchronous action. It only succeeded if you see the "Successfully joined #... as justinfan..." message.
 
 Twitch emotes and emojis from incoming messages are collected and may be ranked by popularity according to the following logic: if matrix display buffer is not full each image is sent right away, otherwise a counter of occurences is incremented for each image not yet sent. The ranking resulting from this process is used to decide upload priority order when one or more image slot becomes available on the matrix display. Higher number of occurences equals higher priority. When an image is sent to the display, its counter is reset. \
 By default multiple occurences of the same emote/emoji in a message are counted. This behaviour can be disabled using `--no-summation` in order to prevent emote priority war by flooding with very long messages. On the other hand, default function better reflects viewer excitement if they don't abuse it. When this argument is used, any amount of the same image in a message counts for 1.
