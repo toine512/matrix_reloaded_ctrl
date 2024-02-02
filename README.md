@@ -49,7 +49,7 @@ PyInstaller supports using [UPX](https://upx.github.io) in order to reduce execu
 The matrix display is a simple image queue which preserves upload order. The buffer of available memory is divided into fixed size slots, each holding one image. A slot is freed once the image it contains has been displayed. No logic besides consuming queue items happens at the receiving end. The display firmware directly decodes PNG and GIF and supports resizing. `matrix_display.py` listens to Twitch chat, collects emotes and emojis, then uploads them to the display over HTTP while ensuring maximum use of the queue.
 
 This app connects to Twitch Messaging Interface (TMI) as the anonymous user (read only), no credentials are required. You can join multiple channels at the same time (as described in [Twitch Developers documentation](https://dev.twitch.tv/docs/irc/join-chat-room/)). Letter case doesn't matter. \
-Example: `python matrix_display.py "#ioodyme,#ElisaK_,#Rancune_,#Yorzian,#SarahCoponat"` \
+Example: `python matrix_display.py "#ioodyme,#ElisaK_,#Rancune_,#Yorzian,#SarahCoponat"`
 > [!NOTE]
 > Joining a channel is an asynchronous action. It only succeeded if you see the "Successfully joined #... as justinfan..." message.
 
