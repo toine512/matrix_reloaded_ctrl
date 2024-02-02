@@ -46,14 +46,16 @@ PyInstaller supports using [UPX](https://upx.github.io) in order to reduce execu
 
 ## How it works
 
-The matrix display is a simple image queue which preserves order of upload. The buffer of available memory is divided into fixed size slots. A slot is freed once the image it contains has been displayed. No logic besides consuming queue items happens at the receiving end. The display directly decodes PNG and GIF and supports resizing.
+The matrix display is a simple image queue which preserves upload order. The buffer of available memory is divided into fixed size slots, each holding one image. A slot is freed once the image it contains has been displayed. No logic besides consuming queue items happens at the receiving end. The display firmware directly decodes PNG and GIF and supports resizing. `matrix_display.py` listens to Twitch chat, collects emotes and emojis, then uploads them to the display over HTTP while ensuring maximum use of the queue.
 
 This app connects to Twitch Messaging Interface (TMI) as the anonymous user (read only), no credentials are required. You can join multiple channels at the same time (as described in [Twitch Developers documentation](https://dev.twitch.tv/docs/irc/join-chat-room/)). Letter case doesn't matter. \
 Example: `python matrix_display.py "#ioodyme,#ElisaK_,#Rancune_,#Yorzian,#SarahCoponat"` \
-Joining a channel is an asynchronous action. It only succeeded if you see the "Successfully joined #... as justinfan..." message.
+> [!NOTE]
+> Joining a channel is an asynchronous action. It only succeeded if you see the "Successfully joined #... as justinfan..." message.
 
-Twitch emotes and emojis from incoming messages are collected and may be ranked by popularity according to the following logic: if matrix display buffer is not full each image is sent right away, otherwise a counter of occurences is incremented for each image not yet sent. The ranking resulting from this process is used to decide upload priority order when one or more image slot becomes available on the matrix display. Higher number of occurences equals higher priority. When an image is sent to the display, its counter is reset. \
-By default multiple occurences of the same emote/emoji in a message are counted. This behaviour can be disabled using `--no-summation` in order to prevent emote priority war by flooding with very long messages. On the other hand, default function better reflects viewer excitement if they don't abuse it. When this argument is used, any amount of the same image in a message counts for 1.
+Twitch emotes and emojis from incoming messages are collected and may be ranked by popularity according to the following logic: if matrix display buffer is not full each image is sent right away, otherwise a counter of occurences is incremented for each image not yet sent. The ranking resulting from this process is used to decide upload priority order when one or more image slot becomes available in the matrix display. Higher number of occurences equals higher priority. When an image is sent to the display, its counter is reset.
+> [!IMPORTANT]
+> By default multiple occurences of the same emote/emoji in a message are counted. This behaviour can be disabled using `--no-summation` in order to prevent emote priority war by flooding with very long messages. On the other hand, default function better reflects viewer excitement if they don't abuse it. When this argument is used, any amount of the same image in a message counts for 1.
 
 Twitch emote files are obtained from [Twitch static CDN](https://dev.twitch.tv/docs/irc/emotes/#cdn-template), emojis are [Twemoji purposely rendered at 128x128](https://github.com/toine512/twemoji-bitmaps?tab=readme-ov-file) served by jsDelivr. Image files are downloaded once and cached forever in `python_matrix_reloaded_cache` directory located at user's temporary files path as returned by [tempfile](https://docs.python.org/3/library/tempfile.html#tempfile.gettempdir) Python module. \
 Under Windows it yields `<User Directory>/AppData/Local/Temp/python_matrix_reloaded_cache/`. \
@@ -63,9 +65,40 @@ While the display is unreachable, emote/emoji collection, ranking and download r
 
 ## Command interface
 
-The command interface is intended to help handing over control of the matrix display to another software in an automation system. It doesn't provide remote dynamic full functionality. Text over a TCP connection is used to issue commands. The command interface can be enabled by providing the port you'd like to use: `--command-port <port>`. Concurrent connections are not supported, which greatly simplified implementation. When a new connection is established, the existing one (if any) is closed.
+### Overview
+
+The command interface is intended to help handing over control of the matrix display to another software in an automation system. It doesn't provide remote dynamic full functionality.
+
+Text over a TCP connection is used to issue commands. The command interface can be enabled by providing the port you'd like to use: `--command-port <port>`. Concurrent connections are not supported, which greatly simplified implementation. When a new connection is established, the existing one (if any) is closed.
+
+### Commands
+
+Available commands are explained in the following table. I've reused the IRC Protocol syntax. Charset is UTF-8, end of line character is LF.
+
+| Command | Description | Explanation |
+| :---: | :--- | :--- |
+| ON | Starts operation | Necessary with `--interactive`. |
+| OFF | Stops operation |  |
+| CLEAR | Clears all queues and the matrix display |  |
+| PAUSE | Stops sending images to the matrix display, emotes and emoji collection remaining active |  |
+| JOIN :<#chan>{,<#chan>{,...}} | Joins <#chan> | Example: `JOIN :#ioodyme,#CanardPC` |
+
+### Human commands
+
+Although the command interface is meant for machine control, telnet-friendly features are provided for debug and exploration purposes.
+
+### Modes of operation
+
+
+
+## More integration oriented features
+
+
 
 ## Use cases
+
+> [!TIP]
+> It is advised that you use `--log-level debug` while setting up in order to see all messages.
 
 ### Basic - run ondemand
 
@@ -73,52 +106,41 @@ The command interface is intended to help handing over control of the matrix dis
 
 ## Usage
 ```
-Matrix Display Controller v0.0 [-h] [-q] [-s] [-u] [-i]
+Matrix Display Controller v1.0 [-h] [-q] [-s] [-u] [-i]
                                [--matrix-hostname MATRIX_HOSTNAME]
                                [--log-level {TRACE,DEBUG,INFO,SUCCESS,WARNING,ERROR,CRITICAL}]
                                [--forbidden-emotes FORBIDDEN_EMOTES]
                                [--forbidden-users FORBIDDEN_USERS]
                                [--command-port COMMAND_PORT]
+                               [--purge]
+                               [--version]
+                               [--license]
                                [chan]
 
 positional arguments:
-  chan                  Required if standalone. Twitch Messaging Interface
-                        channel(s) to join. Format: <#chan>{,<#chan>{,...}}
+  chan                  Required if standalone. Twitch Messaging Interface channel(s) to join. Format: <#chan>{,<#chan>{,...}}
 
 options:
   -h, --help            show this help message and exit
   --matrix-hostname MATRIX_HOSTNAME
-                        Defaults to 'matrix-reloaded.local'. Matrix display
-                        hostname or IP address to connect to.
+                        Defaults to 'matrix-reloaded.local'. Matrix display hostname or IP address to connect to.
   --log-level {TRACE,DEBUG,INFO,SUCCESS,WARNING,ERROR,CRITICAL}
-                        Defaults to INFO. Messages level SUCCESS and higher
-                        are output to stderr. Level SUCCESS corresponds to
-                        successful events that are important to the user (good
-                        warnings), select WARNING if you want to only be
-                        notified of failure warnings. Setting log level to
-                        DEBUG is suggested while experimenting. TRACE level
-                        prints IRC communications, which will expose
-                        credentials!
-  -q, --quiet           No ouput to stdout. All messages are ouput to stderr.
-                        Log level can still be set using --log-level. Defaults
-                        to SUCCESS then.
+                        Defaults to INFO. Messages level SUCCESS and higher are output to stderr. Level SUCCESS corresponds to successful events that are important to the user (good warnings), select WARNING if you want to only be notified of failure warnings. Setting log level to DEBUG is suggested while experimenting. TRACE level prints IRC communications, which will expose credentials!
+  -q, --quiet           No ouput to stdout. All messages are ouput to stderr. Log level can still be set using --log-level. Defaults to SUCCESS then.
   -s, --silent          No output.
   --forbidden-emotes FORBIDDEN_EMOTES
                         Comma-separated list of forbidden Twitch emote ids.
   --forbidden-users FORBIDDEN_USERS
-                        Comma-separated list of Twitch users to be ignored.
-                        Use this to ignore your bots.
-  -u, --no-summation    Don't count repetitions of the same emote/emoji in A
-                        message.
-  -i, --interactive     Don't do anything. Wait for commands on the command
-                        interface. --command-port is mandatory.
+                        Comma-separated list of Twitch users to be ignored. Use this to ignore your bots.
+  -u, --no-summation    Don't count repetitions of the same emote/emoji in A message.
+  -i, --interactive     Don't do anything. Wait for commands on the command interface. --command-port is mandatory.
   --command-port COMMAND_PORT
-                        TCP port for the command interface. The command
-                        interface is disabled if this argument is not
-                        specified.
+                        TCP port for the command interface. The command interface is disabled if this argument is not specified.
+  --purge               Cleans the local cache and exits. Sometimes emojis get corrections.
+  --version             Shows version and exits.
+  --license             Shows license prompt and exits.
 
-Built-in forbidden Twitch emotes: MercyWing1, MercyWing2, PowerUpL, PowerUpR,
-Squid1, Squid2, Squid4
+Built-in forbidden Twitch emotes: MercyWing1, MercyWing2, PowerUpL, PowerUpR, Squid1, Squid2, Squid4, DinoDance
 ```
 
 ## Licensing
