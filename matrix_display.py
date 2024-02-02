@@ -11,7 +11,8 @@ FORBIDDEN_TWITCH_EMOTES = {
 	"PowerUpR": "425671",
 	"Squid1": "191762",
 	"Squid2": "191763",
-	"Squid4": "191767"
+	"Squid4": "191767",
+	"DinoDance": "emotesv2_dcd06b30a5c24f6eb871e8f5edbd44f7"
 }
 FULL_LOG_INFO_TO_CONSOLE = False
 PRGM_VERSION = "0.0"
