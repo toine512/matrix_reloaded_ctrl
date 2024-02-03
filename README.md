@@ -62,7 +62,7 @@ Under Windows it yields `<User Directory>/AppData/Local/Temp/python_matrix_reloa
 > [!NOTE]
 > This cache can be removed for cleanup purposes or when an emoji is updated using `--purge`.
 
-While the display is unreachable, emote/emoji collection, ranking and download remain running. The backlog is uploaded to the matrix display as soon as it is available.
+By default the target display is `matrix-reloaded.local`, this can be changed by specifying `--matrix-hostname`. While the display is unreachable, emote/emoji collection, ranking and download remain running. The backlog is uploaded to the matrix display as soon as it is available.
 
 ## Command interface
 
