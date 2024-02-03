@@ -58,8 +58,9 @@ Twitch emotes and emojis from incoming messages are collected and may be ranked 
 > By default multiple occurences of the same emote/emoji in a message are counted. This behaviour can be disabled using `--no-summation` in order to prevent emote priority war by flooding with very long messages. On the other hand, default function better reflects viewer excitement if they don't abuse it. When this argument is used, any amount of the same image in a message counts for 1.
 
 Twitch emote files are obtained from [Twitch static CDN](https://dev.twitch.tv/docs/irc/emotes/#cdn-template), emojis are [Twemoji purposely rendered at 128x128](https://github.com/toine512/twemoji-bitmaps?tab=readme-ov-file) served by jsDelivr. Image files are downloaded once and cached forever in `python_matrix_reloaded_cache` directory located at user's temporary files path as returned by [tempfile](https://docs.python.org/3/library/tempfile.html#tempfile.gettempdir) Python module. \
-Under Windows it yields `<User Directory>/AppData/Local/Temp/python_matrix_reloaded_cache/`. \
-This cache can be removed for cleanup purposes or when an emoji is updated using `--purge`.
+Under Windows it yields `<User Directory>/AppData/Local/Temp/python_matrix_reloaded_cache/`.
+> [!NOTE]
+> This cache can be removed for cleanup purposes or when an emoji is updated using `--purge`.
 
 While the display is unreachable, emote/emoji collection, ranking and download remain running. The backlog is uploaded to the matrix display as soon as it is available.
 
@@ -73,7 +74,7 @@ Text over a TCP connection is used to issue commands. The command interface can 
 
 ### Commands
 
-Available commands are explained in the following table. I've reused the IRC Protocol syntax. Charset is UTF-8, end of line character is LF.
+Available commands are explained in the following table. I've reused the IRC Protocol syntax. Charset is UTF-8, **end of line character is LF**.
 
 <table align="center">
   <thead>
