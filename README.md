@@ -112,12 +112,12 @@ Necessary with `--interactive` to do anything.
       <td rowspan=2>
 These commands are intended for handing over control of the display to a third party client. HTTP requests can then be issued to the display without interference when paused.
 
-Example workflow:
-1. A special chat command is issued. \
+Example workflow: \
+An established connection with the command interface is assumed.
+1. A special chat command is posted by a Twitch user. \
    `!souverain` \
    In reaction, the automation bot whatching chat intends to display specific graphics on the matrix.
-2. The automation bot queries `PAUSE` to the command interface. \
-   Now the automation bot can freely take control of the matrix display.
+2. The automation bot queries `PAUSE` to the command interface. Now the automation bot can freely take control of the matrix display.
 3. The automation bot makes HTTP requests to the matrix display… \
    `POST /image-prio souverain.png` \
    or \
@@ -145,6 +145,40 @@ Example: `JOIN :#ioodyme,#CanardPC`
 ### Human commands
 
 Although the command interface is meant for machine control, telnet-friendly features are provided for debug and exploration purposes.
+
+First connect the TCP socket to the port you specified via command line input with your favourite client. telnet or Putty can be used. There is no protocol. \
+**Immediately send the command `TELNET` after receiving the first message. This will replace line endings you receive by CR LF and interpret BS (backspace) so you can type normally in your terminal.** You will receive the welcome banner again, with CR LF line endings. The "telnet" mode lasts until you close the connection.
+
+Send the command `?` or `h` or `help` to get help.
+
+Example with the software running on the same machine at port 6666:
+```
+Microsoft Telnet> o ::1 6666 ⏎
+
+> Matrix Display Controller v1.0
+>                               Type '?' to obtain available commands.
+>                                                                     Hello ::1!
+
+< telnet
+
+> CR LF line breaks
+> BS is interpreted
+> Matrix Display Controller v1.0
+> Type '?' to obtain available commands.
+> Hello ::1!
+
+< ?
+
+>   ** Command list **
+> |      ? - Shows this message.
+> |     ON - Starts operation.
+> |    OFF - Stops operation.
+> |  CLEAR - Clears all queues and the matrix display.
+> |  PAUSE - Stops sending images to the matrix display, emotes and emoji collection remaining active.
+> | RESUME - Resumes sending images to the matrix display. The backlog is sent.
+> | TELNET - All line breaks (LF) are converted to CR LF for the lifetime of the connection.
+> | JOIN :<#chan>{,<#chan>{,...}} - Joins <#chan>.
+```
 
 ### Modes of operation
 
