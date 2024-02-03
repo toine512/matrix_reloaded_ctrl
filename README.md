@@ -70,7 +70,7 @@ While the display is unreachable, emote/emoji collection, ranking and download r
 
 The command interface is intended to help handing over control of the matrix display to another software in an automation system. It doesn't provide remote dynamic full functionality.
 
-Text over a TCP connection is used to issue commands. The command interface can be enabled by providing the port you'd like to use: `--command-port <port>`. Concurrent connections are not supported, which greatly simplified implementation. When a new connection is established, the existing one (if any) is closed.
+Text over a TCP connection is used to issue commands. The command interface can be enabled by providing the port you'd like to use: `--command-port <port>`. Concurrent connections are not supported, which greatly simplified implementation. When a new connection is established, the existing one (if any) is closed. **You will receive a banner when the connection is established.** All commands have a response message.
 
 ### Commands
 
@@ -108,11 +108,22 @@ Necessary with `--interactive` to do anything.
     </tr>
     <tr>
       <td align="center">PAUSE</td>
-      <td>Stops sending images to the matrix display, emotes and emoji collection remaining active.</td>
+      <td>Stops sending images to the matrix display, *emotes and emoji collection remaining active*.</td>
       <td rowspan=2>
-These commands are intended for handing over control of the display to a third party client. HTTP request can then be issued to the display without interference when paused.
+These commands are intended for handing over control of the display to a third party client. HTTP requests can then be issued to the display without interference when paused.
 
-Example workflow: \
+Example workflow:
+1. A special chat command is issued. \
+   `!souverain` \
+   In reaction, the automation bot whatching chat intends to display specific graphics on the matrix.
+2. The automation bot queries `PAUSE` to the command interface. \
+   Now the automation bot can freely take control of the matrix display.
+3. The automation bot makes HTTP requests to the matrix display… \
+   `POST /image-prio souverain.png` \
+   or \
+   `GET /clear` \
+   `POST /image souverain.png`
+4. After some time, the normal emote/emoji show will be restored: the automation bot queries `RESUME` to the command interface. Images accumulated during pause are now sent to the matrix display.
       </td>
     </tr>
     <tr>
