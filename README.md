@@ -75,13 +75,57 @@ Text over a TCP connection is used to issue commands. The command interface can 
 
 Available commands are explained in the following table. I've reused the IRC Protocol syntax. Charset is UTF-8, end of line character is LF.
 
-| Command | Description | Explanation |
-| :---: | :--- | :--- |
-| ON | Starts operation | Necessary with `--interactive`. |
-| OFF | Stops operation |  |
-| CLEAR | Clears all queues and the matrix display |  |
-| PAUSE | Stops sending images to the matrix display, emotes and emoji collection remaining active |  |
-| JOIN :<#chan>{,<#chan>{,...}} | Joins <#chan> | Example: `JOIN :#ioodyme,#CanardPC` |
+<table align="center">
+  <thead>
+    <tr>
+      <th align="center">Command</th>
+      <th align="center">Description</th>
+      <th align="center">Explanation</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td align="center">ON</td>
+      <td>Starts operation.</td>
+      <td rowspan=2>
+
+Enables or disables this software. When "OFF", TMI is disconnected and no contact with the matrix display is attempted. Only the command interface remains active. \
+Necessary with `--interactive` to do anything.
+      </td>
+    </tr>
+    <tr>
+      <td align="center">OFF</td>
+      <td>Stops operation.</td>
+    </tr>
+    <tr>
+      <td align="center">CLEAR</td>
+      <td>Clears all queues and the matrix display.</td>
+      <td>Empties local and remote queue and blacks out the display.</td>
+    </tr>
+    <tr>
+      <td align="center">PAUSE</td>
+      <td>Stops sending images to the matrix display, emotes and emoji collection remaining active.</td>
+      <td rowspan=2>
+These commands are intended for handing over control of the display to a third party client. HTTP request can then be issued to the display without interference when paused.
+
+Example workflow: \
+      </td>
+    </tr>
+    <tr>
+      <td align="center">RESUME</td>
+      <td>Resumes sending images to the matrix display.</td>
+    </tr>
+    <tr>
+      <td align="center">JOIN :&lt;#chan&gt;{,&lt;#chan&gt;c{,...}}</td>
+      <td>Joins &lt;#chan&gt;.</td>
+      <td>
+Example: `JOIN :#ioodyme,#CanardPC`
+    </tr>
+  </tbody>
+</table>
+
+> [!NOTE]
+> The clear command implemented in the matrix display firmware (`GET /clear` endpoint) empties its queue and sets the display to black. If you only want to black out currently displayed image, pause this app using the command and send a black image in priority mode to the display (`POST /image-prio` endpoint). Then operation can be resumed.
 
 ### Human commands
 
@@ -149,3 +193,30 @@ The one-file Python app and associated scripted tools are licensed under **GNU A
 This program is free software: you can redistribute it and/or modify it under specified terms. [More information here](https://www.gnu.org/licenses/agpl-3.0.html).
 
 The Windows icon `ioodymDeni.ico` is provided by Alain Gervasi following terms of [CC0 1.0 Universal](https://creativecommons.org/publicdomain/zero/1.0/).
+
+<table>
+    <thead>
+        <tr>
+            <th>Layer 1</th>
+            <th>Layer 2</th>
+            <th>Layer 3</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td rowspan=4>L1 Name</td>
+            <td rowspan=2>L2 Name A</td>
+            <td>L3 Name A</td>
+        </tr>
+        <tr>
+            <td>L3 Name B</td>
+        </tr>
+        <tr>
+            <td rowspan=2>L2 Name B</td>
+            <td>L3 Name C</td>
+        </tr>
+        <tr>
+            <td>L3 Name D</td>
+        </tr>
+    </tbody>
+</table>
