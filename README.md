@@ -51,7 +51,7 @@ The matrix display is a simple image queue which preserves upload order. The buf
 This app connects to Twitch Messaging Interface (TMI) as the anonymous user (read only), no credentials are required. You can join multiple channels at the same time (as described in [Twitch Developers documentation](https://dev.twitch.tv/docs/irc/join-chat-room/)). Letter case doesn't matter. \
 Example: `python matrix_display.py "#ioodyme,#ElisaK_,#Rancune_,#Yorzian,#SarahCoponat"`
 > [!NOTE]
-> Joining a channel is an asynchronous action. It only succeeded if you see the "Successfully joined #... as justinfan..." message.
+> Joining a channel is an asynchronous action. It only succeeded if you see the "Successfully joined #… as justinfan…!" message.
 
 Twitch emotes and emojis from incoming messages are collected and may be ranked by popularity according to the following logic: if matrix display buffer is not full each image is sent right away, otherwise a counter of occurences is incremented for each image not yet sent. The ranking resulting from this process is used to decide upload priority order when one or more image slot becomes available in the matrix display. Higher number of occurences equals higher priority. When an image is sent to the display, its counter is reset.
 > [!IMPORTANT]
@@ -119,7 +119,7 @@ Example workflow: \
       <td>Resumes sending images to the matrix display.</td>
     </tr>
     <tr>
-      <td align="center">JOIN :&lt;#chan&gt;{,&lt;#chan&gt;c{,...}}</td>
+      <td align="center">JOIN :&lt;#chan&gt;{,&lt;#chan&gt;{,…}}</td>
       <td>Joins &lt;#chan&gt;.</td>
       <td>
 Example: `JOIN :#ioodyme,#CanardPC`
