@@ -144,10 +144,10 @@ Example: `JOIN :#ioodyme,#CanardPC`
 
 ### Human commands
 
-Although the command interface is meant for machine control, telnet-friendly features are provided for debug and exploration purposes.
+Although the command interface is meant for machine control, terminal-friendly features are provided for debug and exploration purposes.
 
-First connect the TCP socket to the port you specified via command line input with your favourite client. telnet or Putty can be used. There is no protocol. \
-**Immediately send the command `TELNET` after receiving the first message. This will replace line endings you receive by CR LF and interpret BS (backspace) so you can type normally in your terminal.** You will receive the welcome banner again, with CR LF line endings. The "telnet" mode lasts until you close the connection.
+First connect the TCP socket to the port you specified via command line input with your favourite client. telnet or PuTTY can be used. There is no protocol. \
+**Immediately send the command `TELNET` after receiving the first message. This will replace line endings you receive by CR LF and interpret BS (backspace) so you can type normally in your terminal.** You will receive the welcome banner again, with CR LF line endings. The "telnet mode" lasts until you close the connection.
 
 Send the command `?` or `h` or `help` to get help.
 
