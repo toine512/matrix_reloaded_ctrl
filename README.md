@@ -186,7 +186,14 @@ Microsoft Telnet> o ::1 6666 ⏎
 
 ## More integration oriented features
 
+- Logging: by default there are good and bad warnings output to stderr (level SUCCESS and WARNING). If you only want warnings when something's wrong for automated log processing, set `--log-level warning` explicitely.
 
+- `--forbidden-users` allows you to ignore your bots so that emojis in notifications and responses to stats queries are not shown. Multiple usernames can be passed separated by a comma, letter case doesn't matter. \
+  Example: `--forbidden-users WizeBot,StreamElements`
+
+- `--forbidden-emotes` allows you to ignore specific Twitch emotes. Multiple emote ids can be passed separated by a comma. \
+  This argument takes an **emote id**. You can get the identifier of an emote using [Twitch API](https://dev.twitch.tv/docs/irc/emotes/) or by browsing [twitchemotes.com](https://twitchemotes.com). \
+  Example: `--forbidden-emotes emotesv2_bf2ee530e5a04b5bb305847719998dc7,emotesv2_c9108ca6f1c344e287e1a565ce4dbd57`
 
 ## Use cases
 
