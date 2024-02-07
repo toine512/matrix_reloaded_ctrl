@@ -182,7 +182,10 @@ Microsoft Telnet> o ::1 6666 ⏎
 
 ### Modes of operation
 
+The default behaviour of this program is to connect to TMI and join specified channels autonomously upon startup. The user providing a channel string (the one positional argument) is required.
 
+When `--interactive` argument is used, no action is automatically performed. This mode is intended to be used with the command interface, as an always-running service. Thus `--command-port` becomes required, you must enable the command interface in order to do anything. \
+The channel string provided by command line input becomes optional. If one is given, joining will be attempted automatically after a successful connection to TMI.
 
 ## More integration oriented features
 
