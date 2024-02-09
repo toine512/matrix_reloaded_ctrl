@@ -205,6 +205,13 @@ The channel string provided by command line input becomes optional. If one is gi
 
 ### Basic - run ondemand
 
+The basic scenario is running the program when you need it, and terminate it when you don't. The operation with a simple command line is easy: \
+`matrix_display.py "#ioodyme"` \
+Maybe you have a chat services bot you want to ignore because it uses emojis in its responses to commands: \
+`matrix_display.py --forbidden-users WizeBot "#ioodyme"` \
+While you are experimenting, it is good to set logging level to DEBUG in order to see everything happening: \
+`matrix_display.py --log-level debug --forbidden-users WizeBot "#ioodyme"`
+
 ### Remote controlled
 
 ## Usage
