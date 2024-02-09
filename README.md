@@ -87,7 +87,7 @@ Available commands are explained in the following table. I've reused the IRC Pro
   <tbody>
     <tr>
       <td align="center">ON</td>
-      <td>Starts operation.</td>
+      <td>Connects to TMI and starts operation.</td>
       <td rowspan=2>
 
 Enables or disables this software. When "OFF", TMI is disconnected and no contact with the matrix display is attempted. Only the command interface remains active. \
@@ -99,7 +99,7 @@ Necessary with `--interactive` to do anything.
     </tr>
     <tr>
       <td align="center">OFF</td>
-      <td>Stops operation.</td>
+      <td>Disconnects from TMI and stops operation.</td>
     </tr>
     <tr>
       <td align="center">CLEAR</td>
