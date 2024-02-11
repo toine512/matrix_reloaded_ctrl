@@ -189,7 +189,7 @@ The channel string provided by command line input becomes optional. If one is gi
 
 ## More integration oriented features
 
-- Logging: by default there are good and bad warnings output to stderr (level SUCCESS and WARNING). If you only want warnings when something's wrong for automated log processing, set `--log-level warning` explicitely.
+- Logging: by default there are good and bad warnings output to stderr (level SUCCESS and WARNING). If you only want warnings when something's wrong, for automated log processing: set `--log-level warning` explicitely.
 
 - `--forbidden-users` allows you to ignore your bots so that emojis in notifications and responses to stats queries are not shown. Multiple usernames can be passed separated by a comma, letter case doesn't matter. \
   Example: `--forbidden-users WizeBot,StreamElements`
