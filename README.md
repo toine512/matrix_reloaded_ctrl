@@ -265,6 +265,13 @@ Built-in forbidden Twitch emotes: MercyWing1, MercyWing2, PowerUpL, PowerUpR, Sq
                                   Squid4, DinoDance
 ```
 
+## Known issues
+
+- At least on Windows, when command interface is enabled, sometimes an uncaught exception of unknown origin prevents the app from shutting down upon a SIGTERM. The workaround is issuing SIGTERM twice in order to ensure shutdown if it aborted the first time. \
+  This issue is under investigation.
+
+- Extremely rarely, error "Display: Cache miss. This isn't supposed to happen!" appears. Please report it, accompanied by a description of what you were doing.
+
 ## Licensing
 
 The one-file Python app and associated scripted tools are licensed under **GNU Affero General Public License version 3.0** and comes with absolutely no warranty. Full license text is available as the [LICENSE](LICENSE.md) file, which is a mandatory part of this distribution. \
