@@ -15,7 +15,7 @@ Purposely rendered [Twemoji](https://github.com/toine512/twemoji-bitmaps?tab=rea
 
 Libraries used: [aiohttp](https://docs.aiohttp.org), [aiofile](https://github.com/mosquito/aiofile), [emoji](https://carpedm20.github.io/emoji/docs/), [loguru](https://github.com/Delgan/loguru)
 
-### General case
+### General Case
 
 Download or clone the repo. Alternatively, files you really need for running the app are `matrix_display.py` and `requirements.txt`.
 
@@ -44,7 +44,7 @@ Use `matrix_controller\run.bat` in a terminal to launch the app as you would be 
 You can remove subdirectories of `windows/` once you have copied `matrix_display.exe`. \
 PyInstaller supports using [UPX](https://upx.github.io) in order to reduce executable size. Pass the path to the directory containing `upx.exe` as first argument of generate_exe.bat if you'd like to use UPX.
 
-## How it works
+## How it Works
 
 The matrix display is a simple image queue which preserves upload order. The buffer of available memory is divided into fixed size slots, each holding one image. A slot is freed once the image it contains has been displayed. No logic besides consuming queue items happens at the receiving end. The display firmware directly decodes PNG and GIF and supports resizing. `matrix_display.py` listens to Twitch chat, collects emotes and emojis, then uploads them to the display over HTTP while ensuring maximum use of the queue.
 
@@ -64,7 +64,7 @@ Under Windows it yields `<User Directory>/AppData/Local/Temp/python_matrix_reloa
 
 By default the target display is `matrix-reloaded.local`, this can be changed by specifying `--matrix-hostname`. While the display is unreachable, emote/emoji collection, ranking and download remain running. The backlog is uploaded to the matrix display as soon as it is available.
 
-## Command interface
+## Command Interface
 
 ### Overview
 
@@ -139,7 +139,7 @@ Example: `JOIN :#ioodyme,#CanardPC`
   </tbody>
 </table>
 
-### Human commands
+### Human Commands
 
 Although the command interface is meant for machine control, terminal-friendly features are provided for debug and exploration purposes.
 
@@ -177,14 +177,14 @@ Microsoft Telnet> o ::1 6666 ⏎
 > | JOIN :<#chan>{,<#chan>{,...}} - Joins <#chan>.
 ```
 
-### Modes of operation
+### Modes of Operation
 
 The default behaviour of this program is to connect to TMI and join specified channels autonomously upon startup. The user providing a channel string (the one positional argument) is required.
 
 When `--interactive` argument is used, no action is automatically performed. This mode is intended to be used with the command interface, as an always-running service. Thus `--command-port` becomes required, you must enable the command interface in order to do anything. \
 The channel string provided by command line input becomes optional. If one is given, joining will be attempted automatically after a successful connection to TMI.
 
-## More integration oriented features
+## More Integration Oriented Features
 
 - Logging: by default there are good and bad warnings output to stderr (level SUCCESS and WARNING). If you only want warnings when something's wrong, for automated log processing: set `--log-level warning` explicitely.
 
@@ -195,12 +195,12 @@ The channel string provided by command line input becomes optional. If one is gi
   This argument takes an **emote id**. You can get the identifier of an emote using [Twitch API](https://dev.twitch.tv/docs/irc/emotes/) or by browsing [twitchemotes.com](https://twitchemotes.com). \
   Example: `--forbidden-emotes emotesv2_bf2ee530e5a04b5bb305847719998dc7,emotesv2_c9108ca6f1c344e287e1a565ce4dbd57`
 
-## Use cases
+## Use Cases
 
 > [!TIP]
 > It is advised that you use `--log-level debug` while setting up in order to see all messages.
 
-### Basic - run ondemand
+### Basic - Run Ondemand
 
 The basic scenario is running the program when you need it, and terminate it when you don't. The operation with a simple command line is easy: \
 `matrix_display.py "#ioodyme"` \
@@ -209,7 +209,17 @@ Maybe you have a chat services bot you want to ignore because it uses emojis in 
 While you are experimenting, it is good to set logging level to DEBUG in order to see everything happening: \
 `matrix_display.py --log-level debug --forbidden-users WizeBot "#ioodyme"`
 
-### Remote controlled
+### Remote Controlled
+
+In a streaming setup you'll want to integrate the display to your automation system. A direct TCP connection from your automation bot to the [command interface](#command-interface) is meant to control an always running instance of this software. In this use case it is up to the system the software is running on to maintain it up, reachable and connected to LAN and WAN as any service. On the other hand, the automation bot (Node-RED as an example) sends purely functional commands.
+
+The most basic command line to launch with the remote control interface enabled is \
+`matrix_display.py --command-port 6666`. \
+You have to provide an available port for the software to listen on. As described in [Command Interface](#command-interface), specifying a channel to join is optional. \
+Upon startup the software connects to TMI and does nothing or joins provided channel(s) to start usual operation. This is equivalent to issuing the `ON` command.
+
+You will most likely want to use `--interactive` in order to prevent any action that wasn't explicitely commanded and obtain a service-like operation. With the `--interactive` switch activated, no action happens upon startup. The automation will ask the service to connect (`ON`) or disconnect (`OFF`). If channel(s) is/are specified in the command line, it will be automatically joined after the `ON` command is processed. Usually you'll specify channel(s) you always want to join in the command line (your own). A realistic start command would be as follows: \
+`matrix_display.py --command-port 6666 --interactive --forbidden-users WizeBot "#ioodyme"`
 
 ## Usage
 ```
@@ -262,7 +272,7 @@ Built-in forbidden Twitch emotes: MercyWing1, MercyWing2, PowerUpL, PowerUpR, Sq
                                   Squid4, DinoDance
 ```
 
-## Known issues
+## Known Issues
 
 - At least on Windows, when command interface is enabled, sometimes an uncaught exception of unknown origin prevents the app from shutting down upon a SIGTERM. The workaround is issuing SIGTERM twice in order to ensure shutdown if it aborted the first time. \
   This issue is under investigation.
