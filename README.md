@@ -139,9 +139,6 @@ Example: `JOIN :#ioodyme,#CanardPC`
   </tbody>
 </table>
 
-> [!NOTE]
-> The clear command implemented in the matrix display firmware (`GET /clear` endpoint) empties its queue and sets the display to black. If you only want to black out currently displayed image, pause this app using the command and send a black image in priority mode to the display (`POST /image-prio` endpoint). Then operation can be resumed.
-
 ### Human commands
 
 Although the command interface is meant for machine control, terminal-friendly features are provided for debug and exploration purposes.
