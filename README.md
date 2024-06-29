@@ -213,13 +213,21 @@ While you are experimenting, it is good to set logging level to DEBUG in order t
 
 In a streaming setup you'll want to integrate the display to your automation system. A direct TCP connection from your automation bot to the [command interface](#command-interface) is meant to control an always running instance of this software. In this use case it is up to the system the software is running on to maintain it up, reachable and connected to LAN and WAN as any service. On the other hand, the automation bot (Node-RED as an example) sends purely functional commands.
 
-The most basic command line to launch with the remote control interface enabled is \
-`matrix_display.py --command-port 6666`. \
+The most basic command line to launch with the remote control interface enabled is: \
+`matrix_display.py --command-port 6666` \
 You have to provide an available port for the software to listen on. As described in [Command Interface](#command-interface), specifying a channel to join is optional. \
 Upon startup the software connects to TMI and does nothing or joins provided channel(s) to start usual operation. This is equivalent to issuing the `ON` command.
 
-You will most likely want to use `--interactive` in order to prevent any action that wasn't explicitely commanded and obtain a service-like operation. With the `--interactive` switch activated, no action happens upon startup. The automation will ask the service to connect (`ON`) or disconnect (`OFF`). If channel(s) is/are specified in the command line, it will be automatically joined after the `ON` command is processed. Usually you'll specify channel(s) you always want to join in the command line (your own). A realistic start command would be as follows: \
+You will most likely want to use `--interactive` in order to prevent any action that wasn't explicitely commanded and obtain a service-like operation. With the `--interactive` switch activated, no action happens upon startup. The automation will ask the service to connect (`ON`) or disconnect (`OFF`). If a channel is specified in the command line, it will be automatically joined after the `ON` command is processed. Usually you'll specify a channel you always want to join in the command line (your own). A realistic start command would be: \
 `matrix_display.py --command-port 6666 --interactive --forbidden-users WizeBot "#ioodyme"`
+> [!NOTE]
+> No deamonization is implemented, the operating system has to handle running the Python application in the background.
+
+*explanation about joining channels*
+> [!IMPORTANT]
+> A channel cannot be PARTed, you will have to disconnect (`OFF`) in order to reset joined channels.
+
+*use case about pause and clear*
 
 ## Usage
 ```
