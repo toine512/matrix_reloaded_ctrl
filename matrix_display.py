@@ -147,12 +147,13 @@ class IRCBase (abc.ABC):
 	## I/O
 	# Readline reused in other classes
 	@staticmethod
-	async def read_line_agenerator(socket_reader: asyncio.StreamReader, encoding: str, log_tag: str) -> AsyncIterator[str]:
-		end_of_msg = "\r\n".encode(encoding)
+	async def read_line_agenerator(socket_reader: asyncio.StreamReader, encoding: str, log_tag: str, end_of_msg: str = "\r\n") -> AsyncIterator[str]:
+		by_eomsg = end_of_msg.encode(encoding)
+		i_eomsg_len = len(end_of_msg)
 
 		while True:
 			try:
-				msg = str( await socket_reader.readuntil(end_of_msg) , encoding, "ignore")
+				msg = str( await socket_reader.readuntil(by_eomsg) , encoding, "ignore")
 
 			except asyncio.IncompleteReadError as e: # EOF
 				# Is there something expected before EOF?
@@ -164,8 +165,15 @@ class IRCBase (abc.ABC):
 						LOGGER.trace("{tag}: IncompleteReadError, failure to decode", tag=log_tag)
 					else:
 						# Was the last byte lost? (socket closed too fast?) => Is there a partial separator: \r from \r\n?
-						if len(msg) > 1 and msg[-1] == "\r":
-							msg = msg[0:-1]
+						b_found = False
+						# Test all termination substrings from longest to shortest, and remove it from message
+						for s_endchars in (end_of_msg[0:e] for e in range(-1, -i_eomsg_len, -1)):
+							b_found = msg.endswith(s_endchars)
+							if b_found:
+								msg = msg[0:-len(s_endchars)]
+								break
+						# If partial termination found return the message (that may be broken) and resume operation (exception is swallowed), else ignore message and fall through
+						if b_found:
 							LOGGER.trace("{tag}: {line}", tag=log_tag, line=repr(msg)[1:-1])
 							yield msg
 							continue
@@ -181,7 +189,7 @@ class IRCBase (abc.ABC):
 				# Continue waiting for more
 
 			else:
-				msg = msg[0:-2]
+				msg = msg[0:-i_eomsg_len]
 				LOGGER.opt(lazy=True).trace("{}", lambda: f"{log_tag}: {repr(msg)[1:-1]}")
 				yield msg
 
@@ -994,6 +1002,11 @@ class CommandInterface:
 	## ##
 
 	## I/O
+	# Readline parametrized for this class
+	@classmethod
+	def _read(cls, socket_reader: asyncio.StreamReader) -> AsyncIterator[str]:
+		return IRCBase.read_line_agenerator(socket_reader, cls.encoding, "Remote Read", "\n")
+
 	@classmethod
 	async def _send(cls, socket_writer: asyncio.StreamWriter, crlf_breaks: bool, msg: str) -> None:
 		LOGGER.trace("Remote Send: {esc}", esc=repr(msg)[1:-1])
@@ -1021,14 +1034,14 @@ class CommandInterface:
 
 		# Process commands
 		try:
-			async for msg in IRCBase.read_line_agenerator(socket_reader, self.encoding, "Remote Read"):
+			async for msg in self._read(socket_reader):
 				if b_telnet:
-					msg = self.interpret_bs(msg)
+					msg = self.interpret_bs( msg[0:-1] )
 				cmds, trailing = IRCBase.parse_params(msg)
 
 				if cmds:
 					match cmds[0].lower():
-						case "telnet":
+						case "telnet\r": # telnet sends \r\n therefore a \r will be left over
 							b_telnet = True
 							await self._send(socket_writer, b_telnet, f"CR LF line breaks\nBS is interpreted\n{s_hello_message}")
 
