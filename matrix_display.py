@@ -84,7 +84,17 @@ def exception_str(exception: BaseException) -> str:
 
 
 
-class EmoteQueue (asyncio.Queue):
+class QueueClear (asyncio.Queue):
+
+	def clear(self) -> None:
+		try:
+			while True:
+				self.get_nowait()
+		except asyncio.QueueEmpty:
+			return
+
+
+class EmoteQueue (QueueClear):
 
 	@dataclass
 	class EmoteItem:
@@ -98,16 +108,13 @@ class EmoteQueue (asyncio.Queue):
 		count: int
 
 
-	def __init__(self, maxsize: int = 0) -> None:
-		super().__init__(maxsize)
+class ImageQueue (QueueClear):
 
+	@dataclass
+	class ImageItem:
 
-	def clear(self) -> None:
-		try:
-			while True:
-				self.get_nowait()
-		except asyncio.QueueEmpty:
-			return
+		name: str
+		count: int
 
 ### ***************************** ###
 
@@ -850,10 +857,10 @@ class GetImages:
 
 class MatrixPush:
 
-	def __init__(self, host: str, emote_ladder_function: Callable[[], Coroutine[Any, Any, dict[str, int]]]) -> None:
+	def __init__(self, host: str) -> None:
 		self._s_host = str(host).strip()
-		self._fn_source = emote_ladder_function
 		self._st_banlist: set[str] = set()
+		self.image_q = ImageQueue()
 		self.pause = False
 
 
@@ -888,84 +895,96 @@ class MatrixPush:
 		# - request timeout 3 min (account for reachability issues)
 		async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(use_dns_cache=True, ttl_dns_cache=3600, limit_per_host=1), timeout=aiohttp.ClientTimeout(total=180)) as http_cli:
 
+			di_ladder: defaultdict[str, int] = defaultdict(lambda: 0)
 			while True:
 
-				di_ladder = await self._fn_source()
-
-				while True:
-					# Trap to pause operation
-					while self.pause:
-						await asyncio.sleep(1.5)
+				# Are we accumulating?
+				if len(di_ladder) > 0:
+					# Consume what's currently in the queue (guaranteed to terminate)
+					for _ in range( self.image_q.qsize() ):
+						image = self.image_q.get_nowait() # control is never given back thus the queue can't be emptied elsewhere
+						# Accumulate if file is not banned from upload (previous error)
+						if image.name not in self._st_banlist:
+							di_ladder[image.name] += image.count
 
 					# Get highest ranked emote
-					try:
-						s_name = max(di_ladder, key=di_ladder.get)
-					except ValueError:
-						# ladder is now empty
-						break
+					s_name = max(di_ladder, key=di_ladder.get)
+					i_count = di_ladder[s_name]
+					del di_ladder[s_name]
 
-					# Upload to the matrix
-					## Expected response codes
-					## 200 OK: Loaded
-					## 503 Service Unavailable: no slot available, retry later!
-					## 408 Request Timeout: something went wrong during the transfer, can retry
-					## 413 Content Too Large: file too large
-					## 422 Unprocessable Content: bad file
-					## 500 Internal Server Error: something is very wrong
+				else:
+					image = await self.image_q.get()
+					# Stop if file is banned from upload (previous error)
+					if image.name in self._st_banlist:
+						continue
+					s_name = image.name
+					i_count = image.count
 
-					## Check if file is banned from upload (previous error)
-					if s_name in self._st_banlist:
-						del di_ladder[s_name]
+				# Trap to pause operation
+				while self.pause:
+					await asyncio.sleep(1.5)
 
-					## Open file
-					else:
+				# Upload to the matrix
+				## Expected response codes
+				## 200 OK: Loaded
+				## 503 Service Unavailable: no slot available, retry later!
+				## 408 Request Timeout: something went wrong during the transfer, can retry
+				## 413 Content Too Large: file too large
+				## 422 Unprocessable Content: bad file
+				## 500 Internal Server Error: something is very wrong
+
+				## Open file
+				try:
+					async with async_open(GetImages.path_cache/s_name, "rb") as fd:
+						## POST
 						try:
-							async with async_open(GetImages.path_cache/s_name, "rb") as fd:
-								## POST
-								try:
-									async with http_cli.post(URL.build(scheme="http", host=self._s_host, path="/image"), data=await fd.read(), headers={"Content-Type": "application/octet-stream"}, compress=False, chunked=None, expect100=False) as http_res:
-										match http_res.status:
-										# Normal operation
-											case 200:
-												# Good
-												del di_ladder[s_name]
-												LOGGER.debug("Display: Uploaded {name} to matrix.", name=s_name)
+							async with http_cli.post(URL.build(scheme="http", host=self._s_host, path="/image"), data=await fd.read(), headers={"Content-Type": "application/octet-stream"}, compress=False, chunked=None, expect100=False) as http_res:
+								match http_res.status:
+								# Normal operation
+									case 200:
+										# Good
+										LOGGER.debug("Display: Uploaded {name} to matrix.", name=s_name)
 
-											case 503:
-												http_res.release()
-												LOGGER.debug("Display: Matrix memory full.")
-												# Wait for a bit and retry
-												await asyncio.sleep(2.5)
+									case 503:
+										# Go into accumulation mode: set the image aside
+										di_ladder[s_name] = i_count
+										http_res.release()
+										LOGGER.debug("Display: Matrix memory full.")
+										# Wait for a bit and retry
+										await asyncio.sleep(2.5)
 
-										# Errors
-											case 408:
-												LOGGER.error("Display: Matrix request timeout, something went wrong with the transfer. Retrying.")
-												# Retry
-												await asyncio.sleep(0.1)
+								# Errors
+									case 408:
+										# Go into accumulation mode: set the image aside
+										di_ladder[s_name] = i_count
+										LOGGER.error("Display: Matrix request timeout, something went wrong with the transfer. Retrying.")
+										# Retry
+										await asyncio.sleep(0.1)
 
-											case 413 | 422:
-												del di_ladder[s_name]
-												self._st_banlist.add(s_name)
-												LOGGER.debug("Display: Matrix error: {} {}", http_res.reason, await http_res.text() )
-												LOGGER.info("Display: Adding {name} to forbidden list.", name=s_name)
+									case 413 | 422:
+										# Error, ban the file
+										self._st_banlist.add(s_name)
+										LOGGER.debug("Display: Matrix error: {} {}", http_res.reason, await http_res.text() )
+										LOGGER.info("Display: Adding {name} to forbidden list.", name=s_name)
 
-											case 500:
-												del di_ladder[s_name]
-												LOGGER.error("Display: Matrix internal server error! {}", http_res.text())
+									case 500:
+										# Something is wrong, just do nothing
+										LOGGER.error("Display: Matrix internal server error! {}", http_res.text())
 
-											case _:
-												raise RuntimeError("Unexpected matrix HTTP response!")
+									case _:
+										raise RuntimeError("Unexpected matrix HTTP response!")
 
-								except aiohttp.ClientError as e:
-									# Error may be unreachability due to address changing (got through mDNS)
-									http_cli.connector.clear_dns_cache() # type: ignore
-									# Maybe recoverable error, wait 30 s and retry
-									LOGGER.warning("Display: Matrix unavailable. {exc!s}\nRetry in 30 seconds.", exc=e)
-									await asyncio.sleep(30)
+						except aiohttp.ClientError as e:
+							# Go into accumulation mode: set the image aside
+							di_ladder[s_name] = i_count
+							# Error may be unreachability due to address changing (got through mDNS)
+							http_cli.connector.clear_dns_cache() # type: ignore
+							# Maybe recoverable error, wait 30 s and retry
+							LOGGER.warning("Display: Matrix unavailable. {exc!s}\nRetry in 30 seconds.", exc=e)
+							await asyncio.sleep(30)
 
-						except OSError:
-							LOGGER.error("Display: Cache miss. This isn't supposed to happen!")
-							del di_ladder[s_name]
+				except OSError:
+					LOGGER.error("Display: Cache miss. This isn't supposed to happen!")
 
 	## ##
 
