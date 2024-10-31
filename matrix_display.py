@@ -65,6 +65,7 @@ import textwrap
 import traceback
 import uuid
 import urllib.parse
+#import logging
 
 # External modules
 from aiofile import async_open
@@ -119,6 +120,25 @@ class ImageQueue (QueueClear):
 
 		name: str
 		count: int
+
+
+# From Loguru documentation
+# class InterceptHandler(logging.Handler):
+# 	def emit(self, record: logging.LogRecord) -> None:
+# 		# Get corresponding Loguru level if it exists.
+# 		level: str | int
+# 		try:
+# 			level = LOGGER.level(record.levelname).name
+# 		except ValueError:
+# 			level = record.levelno
+
+# 		# Find caller from where originated the logged message.
+# 		frame, depth = logging.inspect.currentframe(), 0
+# 		while frame and (depth == 0 or frame.f_code.co_filename == logging.__file__):
+# 			frame = frame.f_back
+# 			depth += 1
+
+# 		LOGGER.opt(depth=depth, exception=record.exc_info).log(level, record.getMessage())
 
 ### ***************************** ###
 
@@ -1417,6 +1437,11 @@ class MatrixReloadedApp:
 
 				else:
 					LOGGER.add(sys.stderr, level=s_lvl, format=s_con_format, diagnose=FULL_LOG_INFO_TO_CONSOLE, backtrace=FULL_LOG_INFO_TO_CONSOLE)
+
+				# Non-loguru
+				# if s_lvl == "TRACE":
+				# 	# Activate logging
+				# 	logging.basicConfig(handlers=[InterceptHandler()], level=0, force=True)
 
 		# Create instances
 		self.tmi = TMIEmotesSource(self.emotes_q, args.no_summation, self.st_forbidden_usr, self.st_forbidden_ids, args.chan)
