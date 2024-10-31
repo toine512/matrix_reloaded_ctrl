@@ -1267,10 +1267,10 @@ class MatrixReloadedApp:
 	## Actions
 	def purge_waiting(self) -> None:
 		self.emotes_q.clear()
-		try:
-			self.downloader.clear_ladder()
-		except AttributeError:
-			return
+		# try:
+		# 	self.downloader.clear_ladder()
+		# except AttributeError:
+		# 	return
 
 
 	async def clear_display(self) -> bool:
@@ -1408,7 +1408,8 @@ class MatrixReloadedApp:
 		self.tmi = TMIEmotesSource(self.emotes_q, args.no_summation, self.st_forbidden_usr, self.st_forbidden_ids, args.chan)
 		self.join_channel = self.tmi.join # needs to be exposed to command
 		self.downloader = GetImages(self.emotes_q, self.st_forbidden_ids)
-		self.uploader = MatrixPush(args.matrix_hostname, self.downloader.get_ladder)
+		self.uploader = MatrixPush(args.matrix_hostname)
+		self.downloader.register_consumer(self.uploader.image_q)
 
 		# Banner
 		LOGGER.info("Matrix Display Controller\nversion {ver}\thttps://github.com/toine512/matrix_reloaded_ctrl", ver=PRGM_VERSION)
