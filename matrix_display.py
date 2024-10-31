@@ -860,12 +860,28 @@ class MatrixPush:
 	def __init__(self, host: str) -> None:
 		self._s_host = str(host).strip()
 		self._st_banlist: set[str] = set()
+		self._task_loop: asyncio.AbstractEventLoop | None = None
+		self._clear_flag = False
+		self._not_uploading = asyncio.Event()
+		self._not_uploading.set()
 		self.image_q = ImageQueue()
 		self.pause = False
 
 
-	## App-available method
+	## App-available methods
+	# Thread-safe clear
 	async def clear(self) -> bool:
+		# Is task running?
+		if self._task_loop != None:
+			return await asyncio.run_coroutine_threadsafe(self._internal_clear(), self._task_loop)
+
+		# Else send a detached clear in the calling thread
+		return await self._send_clear()
+
+	## ##
+
+	## Independent send a clear command to the display
+	async def _send_clear(self) -> bool:
 		async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30)) as http_cli:
 			try:
 				async with http_cli.get(URL.build(scheme="http", host=self._s_host, path="/clear"), compress=False) as http_res:
@@ -885,106 +901,147 @@ class MatrixPush:
 
 			return False
 
-	## ##
-
 	## Task
+	# Concurrent task-thread clear management
+	async def _internal_clear(self) -> bool:
+		# Set clear flag
+		self._clear_flag = True
+
+		# Send clear to the display
+		await self._not_uploading.wait()
+		return await self._send_clear()
+
+	# Task
 	async def run(self) -> NoReturn:
+		try:
+			self._task_loop = asyncio.get_running_loop()
 
-		# aiohttp client configuration:
-		# - cache DNS for 1h (usually mDNS)
-		# - request timeout 3 min (account for reachability issues)
-		async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(use_dns_cache=True, ttl_dns_cache=3600, limit_per_host=1), timeout=aiohttp.ClientTimeout(total=180)) as http_cli:
+			# aiohttp client configuration:
+			# - cache DNS for 1h (usually mDNS)
+			# - request timeout 3 min (account for reachability issues)
+			async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(use_dns_cache=True, ttl_dns_cache=3600, limit_per_host=1), timeout=aiohttp.ClientTimeout(total=180)) as http_cli:
 
-			di_ladder: defaultdict[str, int] = defaultdict(lambda: 0)
-			while True:
+				di_ladder: defaultdict[str, int] = defaultdict(lambda: 0)
+				while True:
 
-				# Are we accumulating?
-				if len(di_ladder) > 0:
-					# Consume what's currently in the queue (guaranteed to terminate)
-					for _ in range( self.image_q.qsize() ):
-						image = self.image_q.get_nowait() # control is never given back thus the queue can't be emptied elsewhere
-						# Accumulate if file is not banned from upload (previous error)
-						if image.name not in self._st_banlist:
-							di_ladder[image.name] += image.count
+					# Are we accumulating?
+					if len(di_ladder) > 0:
+						# Is clear requested
+						if self._clear_flag:
+							self.image_q.clear()
+							di_ladder.clear()
+							# Unset the flag
+							self._clear_flag = False
+							# Stop
+							continue
 
-					# Get highest ranked emote
-					s_name = max(di_ladder, key=di_ladder.get)
-					i_count = di_ladder[s_name]
-					del di_ladder[s_name]
+						# Else consume what's currently in the queue (guaranteed to terminate)
+						# Not thread-safe: the queue must only be emptied in the same loop
+						for _ in range( self.image_q.qsize() ):
+							image = self.image_q.get_nowait() # control is never given back thus the queue can't be emptied elsewhere
+							# Accumulate if file is not banned from upload (previous error)
+							# Insertion order is preserved, so it's FIFO for an equal rank.
+							if image.name not in self._st_banlist:
+								di_ladder[image.name] += image.count
 
-				else:
-					image = await self.image_q.get()
-					# Stop if file is banned from upload (previous error)
-					if image.name in self._st_banlist:
+						# Get highest ranked emote
+						s_name = max(di_ladder, key=di_ladder.get)
+						i_count = di_ladder[s_name]
+						del di_ladder[s_name]
+
+					else:
+						# Nothing to clear
+						# Wait for a new image to process
+						image = await self.image_q.get()
+						# Unset any pending clear (there was no backlog to clear while waiting)
+						self._clear_flag = False
+						# Stop if file is banned from upload (previous error)
+						if image.name in self._st_banlist:
+							continue
+						s_name = image.name
+						i_count = image.count
+
+					# Trap to pause operation
+					while self.pause:
+						await asyncio.sleep(1.5)
+
+					# Abort upload if a clear was requested during pause
+					if self._clear_flag:
 						continue
-					s_name = image.name
-					i_count = image.count
 
-				# Trap to pause operation
-				while self.pause:
-					await asyncio.sleep(1.5)
+					# Upload to the matrix
+					## Expected response codes
+					## 200 OK: Loaded
+					## 503 Service Unavailable: no slot available, retry later!
+					## 408 Request Timeout: something went wrong during the transfer, can retry
+					## 413 Content Too Large: file too large
+					## 422 Unprocessable Content: bad file
+					## 500 Internal Server Error: something is very wrong
 
-				# Upload to the matrix
-				## Expected response codes
-				## 200 OK: Loaded
-				## 503 Service Unavailable: no slot available, retry later!
-				## 408 Request Timeout: something went wrong during the transfer, can retry
-				## 413 Content Too Large: file too large
-				## 422 Unprocessable Content: bad file
-				## 500 Internal Server Error: something is very wrong
+					## Open file
+					try:
+						async with async_open(GetImages.path_cache/s_name, "rb") as fd:
+							## POST
+							# Signal transaction
+							self._not_uploading.clear()
 
-				## Open file
-				try:
-					async with async_open(GetImages.path_cache/s_name, "rb") as fd:
-						## POST
-						try:
-							async with http_cli.post(URL.build(scheme="http", host=self._s_host, path="/image"), data=await fd.read(), headers={"Content-Type": "application/octet-stream"}, compress=False, chunked=None, expect100=False) as http_res:
-								match http_res.status:
-								# Normal operation
-									case 200:
-										# Good
-										LOGGER.debug("Display: Uploaded {name} to matrix.", name=s_name)
+							# Request
+							try:
+								async with http_cli.post(URL.build(scheme="http", host=self._s_host, path="/image"), data=await fd.read(), headers={"Content-Type": "application/octet-stream"}, compress=False, chunked=None, expect100=False) as http_res:
+									match http_res.status:
+									# Normal operation
+										case 200:
+											# Good
+											LOGGER.debug("Display: Uploaded {name} to matrix.", name=s_name)
 
-									case 503:
-										# Go into accumulation mode: set the image aside
-										di_ladder[s_name] = i_count
-										http_res.release()
-										LOGGER.debug("Display: Matrix memory full.")
-										# Wait for a bit and retry
-										await asyncio.sleep(2.5)
+										case 503:
+											# Go into accumulation mode: set the image aside
+											di_ladder[s_name] = i_count
+											http_res.release()
+											LOGGER.debug("Display: Matrix memory full.")
+											# Wait for a bit and retry
+											await asyncio.sleep(2.5)
 
-								# Errors
-									case 408:
-										# Go into accumulation mode: set the image aside
-										di_ladder[s_name] = i_count
-										LOGGER.error("Display: Matrix request timeout, something went wrong with the transfer. Retrying.")
-										# Retry
-										await asyncio.sleep(0.1)
+									# Errors
+										case 408:
+											# Go into accumulation mode: set the image aside
+											di_ladder[s_name] = i_count
+											LOGGER.error("Display: Matrix request timeout, something went wrong with the transfer. Retrying.")
+											# Retry
+											await asyncio.sleep(0.1)
 
-									case 413 | 422:
-										# Error, ban the file
-										self._st_banlist.add(s_name)
-										LOGGER.debug("Display: Matrix error: {} {}", http_res.reason, await http_res.text() )
-										LOGGER.info("Display: Adding {name} to forbidden list.", name=s_name)
+										case 413 | 422:
+											# Error, ban the file
+											self._st_banlist.add(s_name)
+											LOGGER.debug("Display: Matrix error: {} {}", http_res.reason, await http_res.text() )
+											LOGGER.info("Display: Adding {name} to forbidden list.", name=s_name)
 
-									case 500:
-										# Something is wrong, just do nothing
-										LOGGER.error("Display: Matrix internal server error! {}", http_res.text())
+										case 500:
+											# Something is wrong, just do nothing
+											LOGGER.error("Display: Matrix internal server error! {}", http_res.text())
 
-									case _:
-										raise RuntimeError("Unexpected matrix HTTP response!")
+										case _:
+											raise RuntimeError("Unexpected matrix HTTP response!")
 
-						except aiohttp.ClientError as e:
-							# Go into accumulation mode: set the image aside
-							di_ladder[s_name] = i_count
-							# Error may be unreachability due to address changing (got through mDNS)
-							http_cli.connector.clear_dns_cache() # type: ignore
-							# Maybe recoverable error, wait 30 s and retry
-							LOGGER.warning("Display: Matrix unavailable. {exc!s}\nRetry in 30 seconds.", exc=e)
-							await asyncio.sleep(30)
+							except aiohttp.ClientError as e:
+								# Go into accumulation mode: set the image aside
+								di_ladder[s_name] = i_count
+								# Error may be unreachability due to address changing (got through mDNS)
+								http_cli.connector.clear_dns_cache() # type: ignore
+								# Maybe recoverable error, wait 30 s and retry
+								LOGGER.warning("Display: Matrix unavailable. {exc!s}\nRetry in 30 seconds.", exc=e)
+								await asyncio.sleep(30)
 
-				except OSError:
-					LOGGER.error("Display: Cache miss. This isn't supposed to happen!")
+							finally:
+								# Signal end of transaction
+								self._not_uploading.set()
+
+					except OSError:
+						LOGGER.error("Display: Cache miss. This isn't supposed to happen!")
+
+		except asyncio.CancelledError:
+			self._task_loop = None
+			raise
 
 	## ##
 
