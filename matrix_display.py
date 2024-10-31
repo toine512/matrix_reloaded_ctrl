@@ -1241,7 +1241,7 @@ class MatrixReloadedApp:
 	def __init__(self) -> None:
 		cli = argparse.ArgumentParser(prog=f"Matrix Display Controller v{PRGM_VERSION}", epilog="Built-in forbidden Twitch emotes: " + ", ".join(FORBIDDEN_TWITCH_EMOTES.keys()))
 		cli.add_argument("chan", action="store", nargs="?", default="", help="Required if standalone. Twitch Messaging Interface channel(s) to join. Format: <#chan>{,<#chan>{,...}}")
-		cli.add_argument("--matrix-hostname", action="store", default="matrix-reloaded.local", help="Defaults to 'matrix-reloaded.local'. Matrix display hostname or IP address to connect to.")
+		cli.add_argument("--matrix-targets", action="store", default="matrix-reloaded.local", help="Defaults to 'matrix-reloaded.local'. Comma-separated list of matrix display hostname or IP address to connect to. (format location:port)")
 		cli.add_argument("--log-level", action="store", choices=LOGGER._core.levels.keys(), type=str.upper, help="Defaults to INFO. Messages level SUCCESS and higher are output to stderr. Level SUCCESS corresponds to successful events that are important to the user (good warnings), select WARNING if you want to only be notified of failure warnings. Setting log level to DEBUG is suggested while experimenting. TRACE level prints IRC communications, which will expose credentials!") # type: ignore
 		cli.add_argument("-q", "--quiet", action="store_true", help="No ouput to stdout. All messages are ouput to stderr. Log level can still be set using --log-level. Defaults to SUCCESS then.")
 		cli.add_argument("-s", "--silent", action="store_true", help="No output.")
@@ -1262,6 +1262,7 @@ class MatrixReloadedApp:
 		self.emotes_q = EmoteQueue()
 		self.command = CommandInterface(self)
 		self.st_forbidden_ids = set(FORBIDDEN_TWITCH_EMOTES.values())
+		self.uploaders = list()
 
 
 	## CLI parsing helper
@@ -1281,10 +1282,11 @@ class MatrixReloadedApp:
 
 
 	async def clear_display(self) -> bool:
-		try:
-			return await self.uploader.clear()
-		except AttributeError:
-			return False
+		final = True
+		for uploader in self.uploaders:
+			res = await uploader.clear()
+			final = final and res
+		return final
 
 
 	async def clear_all(self) -> bool:
@@ -1331,7 +1333,8 @@ class MatrixReloadedApp:
 	def pause(self) -> bool:
 		if not (self._task_run_show == None or self._task_run_show.done()):
 			# Defined if "the show" runs
-			self.uploader.pause = True
+			for uploader in self.uploaders:
+				uploader.pause = True
 			return True
 
 		return False
@@ -1340,7 +1343,8 @@ class MatrixReloadedApp:
 	def resume(self) -> bool:
 		if not (self._task_run_show == None or self._task_run_show.done()):
 			# Defined if "the show" runs
-			self.uploader.pause = False
+			for uploader in self.uploaders:
+				uploader.pause = False
 			return True
 
 		return False
@@ -1352,7 +1356,8 @@ class MatrixReloadedApp:
 		async with asyncio.TaskGroup() as tg:
 			self._task_tmi = tg.create_task( self.tmi.run() )
 			tg.create_task( self.downloader.run() )
-			tg.create_task( self.uploader.run() )
+			for uploader in self.uploaders:
+				tg.create_task( uploader.run() )
 
 
 	async def main(self) -> None:
@@ -1384,6 +1389,8 @@ class MatrixReloadedApp:
 			self._cli_parser.error("Port value forbidden!")
 		if not (args.chan or args.command_port): # This is also what's displayed when no argument is given at all
 			self._cli_parser.error("A channel to join must be supplied when remote command interface is not enabled. Try --help to see the list of arguments and their explanation.")
+		# List of matrix hosts
+		li_hosts = [netloc for netloc in (item.strip() for item in self.comma_separated_list(args.matrix_targets)) if netloc]
 		# Forbidden emotes
 		self.st_forbidden_ids.update( (id for id in self.comma_separated_list(args.forbidden_emotes) if id) )
 		# Fobidden nicks
@@ -1415,14 +1422,16 @@ class MatrixReloadedApp:
 		self.tmi = TMIEmotesSource(self.emotes_q, args.no_summation, self.st_forbidden_usr, self.st_forbidden_ids, args.chan)
 		self.join_channel = self.tmi.join # needs to be exposed to command
 		self.downloader = GetImages(self.emotes_q, self.st_forbidden_ids)
-		self.uploader = MatrixPush(args.matrix_hostname)
-		self.downloader.register_consumer(self.uploader.image_q)
+		for netloc in li_hosts:
+			uploader = MatrixPush(netloc)
+			self.uploaders.append(uploader)
+			self.downloader.register_consumer(uploader.image_q)
 
 		# Banner
 		LOGGER.info("Matrix Display Controller\nversion {ver}\thttps://github.com/toine512/matrix_reloaded_ctrl", ver=PRGM_VERSION)
 
 		# Report user configuration
-		LOGGER.info("Target display is {host}", host=args.matrix_hostname)
+		LOGGER.info("Target display(s): {netlocs}", netlocs=", ".join(li_hosts))
 		if self.st_forbidden_ids:
 			LOGGER.info("Forbidden Twitch emote ids: {ids}", ids=", ".join(self.st_forbidden_ids))
 		if self.st_forbidden_usr:
