@@ -687,10 +687,9 @@ class GetImages:
 		# Create cache dir
 		self.path_cache.mkdir(exist_ok=True)
 
-		self.di_ladder: defaultdict[str, int] = defaultdict(lambda: 0)
 		self.b_do_twitch = False
 		self.b_do_emoji = False
-		self._event_ladder = asyncio.Event()
+		self._li_consumers: list[ImageQueue] = list()
 
 
 	## Caching (FS) helpers
@@ -718,15 +717,8 @@ class GetImages:
 	## ##
 
 	## App-available methods
-	async def get_ladder(self) -> dict[str, int]:
-		await self._event_ladder.wait()
-		self._event_ladder.clear()
-		return self.di_ladder
-
-
-	def clear_ladder(self) -> None:
-		self._event_ladder.clear()
-		self.di_ladder.clear()
+	def register_consumer(self, q: ImageQueue) -> None:
+		self._li_consumers.append(q)
 
 	## ##
 
@@ -839,10 +831,9 @@ class GetImages:
 					except (aiohttp.ClientError, OSError): # aiohttp client errors, file errors
 						break # maybe recoverable error, restart
 
-					# Add to ranking memory
-					# Insertion order is preserved, so it's FIFO for an equal rank.
-					self.di_ladder[path_file.name] += emote.count
-					self._event_ladder.set() # inform paused reader there's new data
+					# Send to consumers
+					for q in self._li_consumers:
+						q.put_nowait( q.ImageItem(path_file.name, emote.count) )
 
 
 				await asyncio.sleep(300)
