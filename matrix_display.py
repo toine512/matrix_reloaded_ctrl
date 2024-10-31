@@ -64,6 +64,7 @@ import tempfile
 import textwrap
 import traceback
 import uuid
+import urllib.parse
 
 # External modules
 from aiofile import async_open
@@ -82,6 +83,9 @@ from yarl import URL
 def exception_str(exception: BaseException) -> str:
 	return "".join( traceback.format_exception_only(exception) ).strip()
 
+def basic_url(netloc: str, path: str, scheme: str = "http") -> str:
+	components = urllib.parse.ParseResult(scheme, netloc, path, "", "", "")
+	return urllib.parse.urlunparse(components)
 
 
 class QueueClear (asyncio.Queue):
@@ -878,7 +882,7 @@ class MatrixPush:
 	async def _send_clear(self) -> bool:
 		async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30)) as http_cli:
 			try:
-				async with http_cli.get(URL.build(scheme="http", host=self._s_host, path="/clear"), compress=False) as http_res:
+				async with http_cli.get(basic_url(self._s_host, "/clear"), compress=False) as http_res:
 					match http_res.status:
 						case 200:
 							LOGGER.info("Display: Matrix cleared.")
@@ -981,7 +985,7 @@ class MatrixPush:
 
 							# Request
 							try:
-								async with http_cli.post(URL.build(scheme="http", host=self._s_host, path="/image"), data=await fd.read(), headers={"Content-Type": "application/octet-stream"}, compress=False, chunked=None, expect100=False) as http_res:
+								async with http_cli.post(basic_url(self._s_host, "/image"), data=await fd.read(), headers={"Content-Type": "application/octet-stream"}, compress=False, chunked=None, expect100=False) as http_res:
 									match http_res.status:
 									# Normal operation
 										case 200:
