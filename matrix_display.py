@@ -864,7 +864,10 @@ class MatrixPush:
 	async def clear(self) -> bool:
 		# Is task running?
 		if self._task_loop != None:
-			return await asyncio.run_coroutine_threadsafe(self._internal_clear(), self._task_loop)
+			# Ask for execution in the task thread
+			concurrent_future = asyncio.run_coroutine_threadsafe(self._internal_clear(), self._task_loop)
+			# Wait in the calling thread
+			return await asyncio.wrap_future(concurrent_future)
 
 		# Else send a detached clear in the calling thread
 		return await self._send_clear()
