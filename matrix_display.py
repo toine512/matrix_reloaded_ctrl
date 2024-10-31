@@ -1435,7 +1435,7 @@ class MatrixReloadedApp:
 		if self.st_forbidden_ids:
 			LOGGER.info("Forbidden Twitch emote ids: {ids}", ids=", ".join(self.st_forbidden_ids))
 		if self.st_forbidden_usr:
-			LOGGER.info("Ignored Twitch users: {names}", names=", ".join(self.st_forbidden_usr))
+			LOGGER.info("Ignored Twitch user(s): {names}", names=", ".join(self.st_forbidden_usr))
 		if args.no_summation:
 			LOGGER.info("Summation of emote instances per message is disabled.")
 
