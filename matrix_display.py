@@ -1281,8 +1281,8 @@ class MatrixReloadedApp:
 
 		self.emotes_q = EmoteQueue()
 		self.command = CommandInterface(self)
-		self.st_forbidden_ids = set(FORBIDDEN_TWITCH_EMOTES.values())
 		self.uploaders = list()
+		self.st_forbidden_ids = set(FORBIDDEN_TWITCH_EMOTES.values())
 
 
 	## CLI parsing helper
