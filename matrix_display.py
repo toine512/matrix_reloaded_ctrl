@@ -1037,6 +1037,7 @@ class CommandInterface:
 			async for msg in self._read(socket_reader):
 				if b_telnet:
 					msg = self.interpret_bs( msg[0:-1] )
+
 				cmds, trailing = IRCBase.parse_params(msg)
 
 				if cmds:
@@ -1087,7 +1088,7 @@ class CommandInterface:
 								await self._send(socket_writer, b_telnet, "Paused display.")
 							else:
 								LOGGER.debug("Remote: Requested PAUSE while not running.")
-								await self._send(socket_writer, b_telnet, "Show is not running!.")
+								await self._send(socket_writer, b_telnet, "Show is not running!")
 
 						case "resume":
 							if self._app.resume():
@@ -1095,7 +1096,7 @@ class CommandInterface:
 								await self._send(socket_writer, b_telnet, "Resumed display.")
 							else:
 								LOGGER.debug("Remote: Requested RESUME while not running.")
-								await self._send(socket_writer, b_telnet, "Show is not running!.")
+								await self._send(socket_writer, b_telnet, "Show is not running!")
 
 						case "?" | "help" | "h":
 							prompt = (
