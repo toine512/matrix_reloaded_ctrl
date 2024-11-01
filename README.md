@@ -174,7 +174,9 @@ Microsoft Telnet> o ::1 6666 ⏎
 > |  PAUSE - Stops sending images to the matrix display, emotes and emoji collection remaining active.
 > | RESUME - Resumes sending images to the matrix display. The backlog is sent.
 > | TELNET - All line breaks (LF) are converted to CR LF for the lifetime of the connection.
-> | JOIN :<#chan>{,<#chan>{,...}} - Joins <#chan>.
+> |     JOIN :<#chan>{,<#chan>{,...}} - Joins <#chan>.
+> |   USRBAN :<nick>                  - Adds <nick> to the list of forbidden usernames.
+> | USRUNBAN :<nick>                  - Removes <nick> from the list of forbidden usernames.
 ```
 
 ### Modes of Operation
@@ -232,10 +234,11 @@ You will most likely want to use `--interactive` in order to prevent any action 
 ## Usage
 ```
 Matrix Display Controller v1.0 [-h] [-q] [-s] [-u] [-i]
-                               [--matrix-hostname MATRIX_HOSTNAME]
+                               [--matrix-targets MATRIX_TARGETS]
                                [--log-level {TRACE,DEBUG,INFO,SUCCESS,WARNING,ERROR,CRITICAL}]
                                [--forbidden-emotes FORBIDDEN_EMOTES]
                                [--forbidden-users FORBIDDEN_USERS]
+                               [--forbidden-users-file FORBIDDEN_USERS_FILE]
                                [--command-port COMMAND_PORT]
                                [--purge]
                                [--version]
@@ -248,9 +251,10 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
-  --matrix-hostname MATRIX_HOSTNAME
+  --matrix-targets MATRIX_TARGETS
                         Defaults to 'matrix-reloaded.local'.
-                        Matrix display hostname or IP address to connect to.
+                        Comma-separated list of matrix display hostname or IP address to connect to.
+                        (format location:port)
   --log-level {TRACE,DEBUG,INFO,SUCCESS,WARNING,ERROR,CRITICAL}
                         Defaults to INFO. Messages level SUCCESS and higher are output to stderr.
                         Level SUCCESS corresponds to successful events that are important
@@ -266,6 +270,11 @@ options:
   --forbidden-users FORBIDDEN_USERS
                         Comma-separated list of Twitch users to be ignored.
                         Use this to ignore your bots.
+  --forbidden-users-file FORBIDDEN_USERS_FILE
+                        Path to a text file containing Twitch users to be ignored
+                        (same as --forbidden-users), one name per line.
+                        When this argument is specified, --forbidden-users is ignored.
+                        Specify this file to enable persistence.
   -u, --no-summation    Don't count repetitions of the same emote/emoji in A message.
   -i, --interactive     Don't do anything. Wait for commands on the command interface.
                         --command-port is mandatory.
