@@ -15,7 +15,7 @@ FORBIDDEN_TWITCH_EMOTES = {
 	"DinoDance": "emotesv2_dcd06b30a5c24f6eb871e8f5edbd44f7"
 }
 FULL_LOG_INFO_TO_CONSOLE = False
-PRGM_VERSION = "0.0"
+PRGM_VERSION = "1.0"
 
 ### ***************************** ###
 
