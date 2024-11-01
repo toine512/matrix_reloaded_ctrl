@@ -63,8 +63,8 @@ import sys
 import tempfile
 import textwrap
 import traceback
-import uuid
 import urllib.parse
+import uuid
 #import logging
 
 # External modules
