@@ -1349,7 +1349,7 @@ class MatrixReloadedApp:
 		cli.add_argument("-s", "--silent", action="store_true", help="No output.")
 		cli.add_argument("--forbidden-emotes", action="store", default="", help="Comma-separated list of forbidden Twitch emote ids.")
 		cli.add_argument("--forbidden-users", action="store", default="", help="Comma-separated list of Twitch users to be ignored. Use this to ignore your bots.")
-		cli.add_argument("--forbidden-users-file", action="store", default="", help="Path to a file containing Twitch users to be ignored (same as --forbidden-users). When this argument is specified, --forbidden-users is ignored. Specify this file to enable persistence.")
+		cli.add_argument("--forbidden-users-file", action="store", default="", help="Path to a text file containing Twitch users to be ignored (same as --forbidden-users), one name per line. When this argument is specified, --forbidden-users is ignored. Specify this file to enable persistence.")
 		cli.add_argument("-u", "--no-summation", action="store_true", help="Don't count repetitions of the same emote/emoji in A message.")
 		cli.add_argument("-i", "--interactive", action="store_true", help="Don't do anything. Wait for commands on the command interface. --command-port is mandatory.")
 		cli.add_argument("--command-port", action="store", type=int, help="TCP port for the command interface. The command interface is disabled if this argument is not specified.")
