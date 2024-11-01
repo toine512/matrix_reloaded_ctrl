@@ -1498,7 +1498,7 @@ class MatrixReloadedApp:
 			print(textwrap.dedent("""\
 				Matrix Display Controller: connects the Matrix Reloaded LED panel display to Twitch chat
 				<https://github.com/toine512/matrix_reloaded_ctrl>
-				Copyright © 2023  toine512 <os@toine512.fr>
+				Copyright © 2024  toine512 <os@toine512.fr>
 
 				This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
