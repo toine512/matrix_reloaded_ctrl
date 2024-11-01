@@ -1098,6 +1098,85 @@ class CommandInterface:
 								LOGGER.debug("Remote: Requested RESUME while not running.")
 								await self._send(socket_writer, b_telnet, "Show is not running!")
 
+						case "usrban":
+							nick = trailing.strip()
+							if nick:
+								if len(nick) < 50: # arbitrary !
+									st_usrban = self._app.st_forbidden_usr
+									path_usrban = self._app.path_usrbanfile
+
+									# File path = persistence enabled
+									if path_usrban != None:
+										# First reload the file
+										st_new = await asyncio.to_thread(self._app.nicks_from_file_line_list, path_usrban)
+										st_usrban.clear()
+										st_usrban.update(st_new)
+
+										# Add username to forbidden set
+										st_usrban.add(nick)
+
+										# Write list to file
+										await asyncio.to_thread(self._app.file_line_list_write, path_usrban, st_usrban)
+
+									# Else just update
+									else:
+										st_usrban.add(nick)
+										await self._send(socket_writer, b_telnet, "Persistence disabled.")
+
+									LOGGER.info("Remote: {} added to forbidden users.", nick)
+									await self._send(socket_writer, b_telnet, f"User ignored: {nick}")
+
+								else:
+									await self._send(socket_writer, b_telnet, "Username too long!")
+							else:
+								await self._send(socket_writer, b_telnet, "Invalid username!")
+
+						case "usrunban":
+							nick = trailing.strip()
+							if nick:
+								if len(nick) < 50: # arbitrary !
+									st_usrban = self._app.st_forbidden_usr
+									path_usrban = self._app.path_usrbanfile
+
+									# File path = persistence enabled
+									if path_usrban != None:
+										# First reload the file
+										st_new = await asyncio.to_thread(self._app.nicks_from_file_line_list, path_usrban)
+										st_usrban.clear()
+										st_usrban.update(st_new)
+
+										# Remove username from forbidden set
+										try:
+											st_usrban.remove(nick)
+
+										except KeyError:
+											await self._send(socket_writer, b_telnet, f"User not in forbidden list: {nick}")
+
+										else:
+											# Write list to file
+											await asyncio.to_thread(self._app.file_line_list_write, path_usrban, st_usrban)
+											LOGGER.info("Remote: {} removed from forbidden users.", nick)
+											await self._send(socket_writer, b_telnet, f"User unignored: {nick}")
+
+									# Else just update
+									else:
+										await self._send(socket_writer, b_telnet, "Persistence disabled.")
+
+										try:
+											st_usrban.remove(nick)
+
+										except KeyError:
+											await self._send(socket_writer, b_telnet, f"User not in forbidden list: {nick}")
+
+										else:
+											LOGGER.info("Remote: {} removed from forbidden users.", nick)
+											await self._send(socket_writer, b_telnet, f"User unignored: {nick}")
+
+								else:
+									await self._send(socket_writer, b_telnet, "Username too long!")
+							else:
+								await self._send(socket_writer, b_telnet, "Invalid username!")
+
 						case "?" | "help" | "h":
 							prompt = (
 								"  ** Command list **",
@@ -1108,7 +1187,9 @@ class CommandInterface:
 								" PAUSE - Stops sending images to the matrix display, emotes and emoji collection remaining active.",
 								"RESUME - Resumes sending images to the matrix display. The backlog is sent.",
 								"TELNET - All line breaks (LF) are converted to CR LF for the lifetime of the connection.",
-								"JOIN :<#chan>{,<#chan>{,...}} - Joins <#chan>."
+								"    JOIN :<#chan>{,<#chan>{,...}} - Joins <#chan>.",
+								"  USRBAN :<nick>                  - Adds <nick> to the list of forbidden usernames.",
+								"USRUNBAN :<nick>                  - Removes <nick> from the list of forbidden usernames."
 							)
 							await self._send(socket_writer, b_telnet, "\n| ".join(prompt))
 
@@ -1174,6 +1255,7 @@ class MatrixReloadedApp:
 		cli.add_argument("-s", "--silent", action="store_true", help="No output.")
 		cli.add_argument("--forbidden-emotes", action="store", default="", help="Comma-separated list of forbidden Twitch emote ids.")
 		cli.add_argument("--forbidden-users", action="store", default="", help="Comma-separated list of Twitch users to be ignored. Use this to ignore your bots.")
+		cli.add_argument("--forbidden-users-file", action="store", default="", help="Path to a file containing Twitch users to be ignored (same as --forbidden-users). When this argument is specified, --forbidden-users is ignored. Specify this file to enable persistence.")
 		cli.add_argument("-u", "--no-summation", action="store_true", help="Don't count repetitions of the same emote/emoji in A message.")
 		cli.add_argument("-i", "--interactive", action="store_true", help="Don't do anything. Wait for commands on the command interface. --command-port is mandatory.")
 		cli.add_argument("--command-port", action="store", type=int, help="TCP port for the command interface. The command interface is disabled if this argument is not specified.")
@@ -1189,12 +1271,38 @@ class MatrixReloadedApp:
 		self.emotes_q = EmoteQueue()
 		self.command = CommandInterface(self)
 		self.st_forbidden_ids = set(FORBIDDEN_TWITCH_EMOTES.values())
+		self.path_usrbanfile: Path | None = None
 
 
 	## CLI parsing helper
 	@staticmethod
-	def comma_separated_list(s: str) -> Iterator[str]:
-		return (x.strip() for x in s.split(","))
+	def separated_list(s: str, separator: str) -> Iterator[str]:
+		return (x.strip() for x in s.split(separator))
+
+	@classmethod
+	def comma_separated_list(cls, s: str) -> Iterator[str]:
+		return cls.separated_list(s, ",")
+
+	@staticmethod
+	def nick_set(items: Iterable[str]) -> set[str]:
+		return set( (nick.lower() for nick in items if nick) )
+
+	## ##
+
+	## Line-list file handlers
+	@staticmethod
+	def file_line_list_read(path: Path) -> list[str]:
+		with path.open(mode="rt", encoding="utf-8", errors="ignore", newline=None) as fd:
+			return [x.strip() for x in fd]
+
+	@staticmethod
+	def file_line_list_write(path: Path, items: Iterable[str]) -> None:
+		with path.open(mode="wt", encoding="utf-8", errors="ignore", newline="\n") as fd:
+			fd.writelines( (f"{x}\n" for x in items) )
+
+	@classmethod
+	def nicks_from_file_line_list(cls, path: Path) -> set[str]:
+		return cls.nick_set( cls.file_line_list_read(path) )
 
 	## ##
 
@@ -1314,7 +1422,18 @@ class MatrixReloadedApp:
 		# Forbidden emotes
 		self.st_forbidden_ids.update( (id for id in self.comma_separated_list(args.forbidden_emotes) if id) )
 		# Fobidden nicks
-		self.st_forbidden_usr = set( (nick.lower() for nick in self.comma_separated_list(args.forbidden_users) if nick) )
+		# Try to read from file if specified
+		if args.forbidden_users_file != "":
+			path_usrban = Path(args.forbidden_users_file)
+			try:
+				self.st_forbidden_usr = self.nicks_from_file_line_list(path_usrban)
+			except OSError as e:
+				self._cli_parser.error(f"Can't read file supplied in --forbidden-users-file! {e!s}")
+			else:
+				self.path_usrbanfile = path_usrban
+		# Else fall back to CLI
+		else:
+			self.st_forbidden_usr = self.nick_set( self.comma_separated_list(args.forbidden_users) )
 
 		# Configure logging
 		LOGGER.remove()
