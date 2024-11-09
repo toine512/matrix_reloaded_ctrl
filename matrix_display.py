@@ -1411,11 +1411,10 @@ class MatrixReloadedApp:
 
 
 	async def clear_display(self) -> bool:
-		final = True
-		for uploader in self.uploaders:
-			res = await uploader.clear()
-			final = final and res
-		return final
+		async with asyncio.TaskGroup() as tg:
+			tasks = [tg.create_task(uploader.clear()) for uploader in self.uploaders]
+
+		return all( (task.result() for task in tasks) )
 
 
 	async def clear_all(self) -> bool:
