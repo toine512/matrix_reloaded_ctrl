@@ -62,7 +62,7 @@ Under Windows it yields `<User Directory>/AppData/Local/Temp/python_matrix_reloa
 > [!NOTE]
 > This cache can be removed for cleanup purposes or when an emoji is updated using `--purge`.
 
-By default the target display is `matrix-reloaded.local`, this can be changed by specifying `--matrix-hostname`. While the display is unreachable, emote/emoji collection, ranking and download remain running. The backlog is uploaded to the matrix display as soon as it is available.
+By default the target display is `matrix-reloaded.local`, this can be changed by specifying one or multiple `--matrix-targets`. While the display is unreachable, emote/emoji collection, ranking and download remain running. The backlog is uploaded to the matrix display as soon as it is available.
 
 ## Command Interface
 
@@ -136,6 +136,18 @@ An established connection with the command interface is assumed.
       <td>
 Example: `JOIN :#ioodyme,#CanardPC`
     </tr>
+    <tr>
+      <td align="center">USRBAN :&lt;nick&gt;</td>
+      <td>Adds &lt;nick&gt; to the list of ignored users. The forbidden list is saved if `--forbidden-users-file` is provided.</td>
+      <td>
+Example: `USRBAN :wizebot`
+    </tr>
+        <tr>
+      <td align="center">USRUNBAN :&lt;nick&gt;</td>
+      <td>Removes &lt;nick&gt; from the list of ignored users. The forbidden list is saved if `--forbidden-users-file` is provided.</td>
+      <td>
+Example: `USRUNBAN :wizebot`
+    </tr>
   </tbody>
 </table>
 
@@ -193,6 +205,8 @@ The channel string provided by command line input becomes optional. If one is gi
 - `--forbidden-users` allows you to ignore your bots so that emojis in notifications and responses to stats queries are not shown. Multiple usernames can be passed separated by a comma, letter case doesn't matter. \
   Example: `--forbidden-users WizeBot,StreamElements`
 
+- `--forbidden-users-file` performs the same as `--forbidden-users` with persistence of the list. Expects a text file (UTF-8, LF) with one username per line. Control interface commands read from and write to this file. When a file is specified, `--forbidden-users` is ignored.
+
 - `--forbidden-emotes` allows you to ignore specific Twitch emotes. Multiple emote ids can be passed separated by a comma. \
   This argument takes an **emote id**. You can get the identifier of an emote using [Twitch API](https://dev.twitch.tv/docs/irc/emotes/) or by browsing [twitchemotes.com](https://twitchemotes.com). \
   Example: `--forbidden-emotes emotesv2_bf2ee530e5a04b5bb305847719998dc7,emotesv2_c9108ca6f1c344e287e1a565ce4dbd57`
@@ -213,7 +227,7 @@ While you are experimenting, it is good to set logging level to DEBUG in order t
 
 ### Remote Controlled
 
-In a streaming setup you'll want to integrate the display to your automation system. A direct TCP connection from your automation bot to the [command interface](#command-interface) is meant to control an always running instance of this software. In this use case it is up to the system the software is running on to maintain it up, reachable and connected to LAN and WAN as any service. On the other hand, the automation bot (Node-RED as an example) sends purely functional commands.
+In a streaming setup you'll want to integrate the display to your automation system. A direct TCP connection from your automation bot to the [command interface](#command-interface) is meant to control an always running instance of this software. In this use case it is up to the system the software is running on to maintain it up, reachable and connected to LAN and WAN, as any service. On the other hand, the automation bot (Node-RED as an example) sends purely functional commands.
 
 The most basic command line to launch with the remote control interface enabled is: \
 `matrix_display.py --command-port 6666` \
@@ -225,11 +239,14 @@ You will most likely want to use `--interactive` in order to prevent any action 
 > [!NOTE]
 > No deamonization is implemented, the operating system has to handle running the Python application in the background.
 
-*explanation about joining channels*
+One or more TMI channels can be joined at any time by the `JOIN` command. If no channel to join is specified in the command line, you are required to join a channel using this command to do anything useful.
 > [!IMPORTANT]
 > A channel cannot be PARTed, you will have to disconnect (`OFF`) in order to reset joined channels.
 
-*use case about pause and clear*
+The operation of this software can be paused in order to get back manual control of the matrix display using `PAUSE` command. Images are accumulated during the pause. Once paused, this controller won't get in the way sending HTTP requests to the matrix display. Your automation can then use the display. \
+The `RESUME` command re-enables control by this software. The backlog of images accumulated during pause will be sent to the display.
+
+You can clear everything (black screen) at any time, without interrupting operation, by issuing the `CLEAR` command. Local and remote queue are emptied. This command can also be used in disconnected mode (OFF).
 
 ## Usage
 ```
