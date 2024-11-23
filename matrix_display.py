@@ -884,22 +884,15 @@ class MatrixPush:
 
 
 	## App-available methods
-	# Thread-safe clear
 	async def clear(self) -> bool:
 		# Is task running?
 		if self._task_loop != None:
-			# Ask for execution in the task thread
-			concurrent_future = asyncio.run_coroutine_threadsafe(self._internal_clear(), self._task_loop)
-			# Wait in the calling thread
-			return await asyncio.wrap_future(concurrent_future)
+			# Do the internal clear
+			# Set clear flag
+			self._clear_flag = True
+			await self._not_uploading.wait()
 
-		# Else send a detached clear in the calling thread
-		return await self._send_clear()
-
-	## ##
-
-	## Independent send a clear command to the display
-	async def _send_clear(self) -> bool:
+		# Send a clear command to the display anyway
 		async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30)) as http_cli:
 			try:
 				async with http_cli.get(basic_url(self._s_host, "/clear"), compress=False) as http_res:
@@ -917,19 +910,11 @@ class MatrixPush:
 			except aiohttp.ClientError as e:
 				LOGGER.error("Display: Unable to clear matrix! {exc!s}", exc=e)
 
-			return False
+		return False
+
+	## ##
 
 	## Task
-	# Concurrent task-thread clear management
-	async def _internal_clear(self) -> bool:
-		# Set clear flag
-		self._clear_flag = True
-
-		# Send clear to the display
-		await self._not_uploading.wait()
-		return await self._send_clear()
-
-	# Task
 	async def run(self) -> NoReturn:
 		try:
 			self._task_loop = asyncio.get_running_loop()
